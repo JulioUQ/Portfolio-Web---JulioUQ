@@ -7,7 +7,7 @@
  */
 import { Image } from 'astro:assets';
 import CardArt from './CardArt.astro';
-import { projects, areaIds, areaLabels } from '../content/projects';
+import { projects, areaIds, areaLabels, projectHref } from '../content/projects';
 import { explorer } from '../content/explorer';
 import { site } from '../content/site';
 import { routeFor, type Lang } from '../i18n/routes';
@@ -26,42 +26,43 @@ const figures = {
   mapExample: cases.maps[lang].figures.example,
 };
 const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)));
+const hrefOf = (p: (typeof projects)[number]) => projectHref(p, (k) => routeFor(k, lang));
 ---
 
 <section id={site[lang].ids.projects} class="section explorer" aria-labelledby="h-projects" data-explorer data-lang={lang}>
   <div class="wrap">
     <h2 id="h-projects">{t.heading}</h2>
-    <p class="section-intro">{t.intro}</p>
+    <p class="section-intro">{t.intro(projects.length)}</p>
 
-    <div class="filters" role="group" aria-label={t.filterLabel}>
-      <ul class="filter-bar">
-        <li><button type="button" class="filter-btn" data-area="" aria-pressed="true">{t.all}</button></li>
-        {
-          usedAreas.map((a) => (
-            <li>
-              <button type="button" class="filter-btn" data-area={a} aria-pressed="false">
-                {areas[a]}
-              </button>
-            </li>
-          ))
-        }
-      </ul>
+    <div class="filters">
+      <label class="filter-label" for={`area-filter-${lang}`}>{t.filterLabel}</label>
+      <span class="select-wrap">
+        <select id={`area-filter-${lang}`} class="filter-select" data-filter>
+          <option value="">{t.all}</option>
+          {usedAreas.map((a) => <option value={a}>{areas[a]}</option>)}
+        </select>
+      </span>
       <p class="count" role="status" data-count>{t.count(projects.length, projects.length)}</p>
     </div>
 
-    <ul class="cards" data-cards>
+    <div class="carousel" data-carousel>
+    <ul class="cards" data-cards id={`cards-${lang}`}>
       {
         projects.map((p) => {
           const x = p.text[lang];
           return (
             <li class="card" data-areas={p.areas.join(' ')}>
-              <CardArt kind={p.art} />
+              {p.image ? (
+                <Image class="card-img" src={p.image} alt="" widths={[400, 640, 800]} sizes="(max-width: 40rem) 92vw, 24rem" format="webp" quality={72} loading="lazy" />
+              ) : (
+                <CardArt kind={p.art} />
+              )}
               <div class="body">
                 <p class="context">{x.context}</p>
                 <h3 id={`card-${p.id}-title`}>
                   <a
                     class="card-link"
-                    href={routeFor(p.route, lang)}
+                    href={hrefOf(p)}
                     data-dialog={`dlg-${p.id}`}
                     aria-haspopup="dialog"
                   >
@@ -83,6 +84,19 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
         })
       }
     </ul>
+
+    <nav class="pager" aria-label={t.pager.label} data-pager hidden>
+      <button type="button" class="pager-btn" data-prev aria-controls={`cards-${lang}`}>
+        <span aria-hidden="true">←</span>
+        <span class="visually-hidden">{t.pager.prev}</span>
+      </button>
+      <ol class="dots" data-dots></ol>
+      <button type="button" class="pager-btn" data-next aria-controls={`cards-${lang}`}>
+        <span aria-hidden="true">→</span>
+        <span class="visually-hidden">{t.pager.next}</span>
+      </button>
+    </nav>
+    </div>
   </div>
 
   {
@@ -95,7 +109,7 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
           : routeFor(p.links.demo.route, lang)
         : null;
       const extra = [
-        p.links.code && { label: t.dialog.code, href: p.links.code, external: true },
+        p.route && p.links.code && { label: t.dialog.code, href: p.links.code, external: true },
         demoHref && { label: t.dialog.demo, href: demoHref, external: typeof p.links.demo === 'string' },
         p.links.article && { label: t.dialog.article, href: p.links.article, external: true },
         p.links.dataset && { label: t.dialog.dataset, href: p.links.dataset, external: true },
@@ -115,6 +129,8 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
               <figure class="dlg-visual">
                 {fig ? (
                   <Image src={fig.src} alt={fig.alt} widths={[480, 800]} sizes="(max-width: 40rem) 92vw, 36rem" format="webp" quality={75} loading="lazy" />
+                ) : p.image ? (
+                  <Image src={p.image} alt={x.imageAlt ?? ''} widths={[480, 800, 1200]} sizes="(max-width: 40rem) 92vw, 36rem" format="webp" quality={78} loading="lazy" />
                 ) : (
                   <CardArt kind={p.art} />
                 )}
@@ -134,9 +150,16 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
                 <h3>{t.dialog.links}</h3>
                 <ul class="dlg-links">
                   <li>
-                    <a class="btn btn-primary" href={routeFor(p.route, lang)}>
-                      {t.dialog.caseLink} <span aria-hidden="true">→</span>
-                    </a>
+                    {p.route ? (
+                      <a class="btn btn-primary" href={routeFor(p.route, lang)}>
+                        {t.dialog.caseLink} <span aria-hidden="true">→</span>
+                      </a>
+                    ) : (
+                      <a class="btn btn-primary" href={p.links.code} rel="noopener">
+                        {t.dialog.codeLink} <span aria-hidden="true">↗</span>
+                        <span class="visually-hidden"> {ui.external}</span>
+                      </a>
+                    )}
                   </li>
                   {extra.map((l) => (
                     <li>
@@ -162,24 +185,107 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
 
   document.querySelectorAll<HTMLElement>('[data-explorer]').forEach((root) => {
     const t = explorer[root.dataset.lang === 'en' ? 'en' : 'es'];
-    const buttons = [...root.querySelectorAll<HTMLButtonElement>('.filter-btn')];
+    const select = root.querySelector<HTMLSelectElement>('[data-filter]')!;
     const cards = [...root.querySelectorAll<HTMLElement>('[data-cards] > .card')];
     const count = root.querySelector<HTMLElement>('[data-count]')!;
 
     // Filtros: uno activo cada vez («Todos» o un área). Un proyecto puede tener varias áreas.
-    buttons.forEach((btn) =>
-      btn.addEventListener('click', () => {
-        const area = btn.dataset.area ?? '';
-        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-        let visible = 0;
-        cards.forEach((card) => {
-          const show = !area || (card.dataset.areas ?? '').split(' ').includes(area);
-          card.hidden = !show;
-          if (show) visible++;
-        });
-        count.textContent = t.count(visible, cards.length);
-      }),
-    );
+    const list = root.querySelector<HTMLElement>('[data-cards]')!;
+    const carousel = root.querySelector<HTMLElement>('[data-carousel]')!;
+    const pager = root.querySelector<HTMLElement>('[data-pager]')!;
+    const prev = pager.querySelector<HTMLButtonElement>('[data-prev]')!;
+    const next = pager.querySelector<HTMLButtonElement>('[data-next]')!;
+    const dots = pager.querySelector<HTMLOListElement>('[data-dots]')!;
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Dos filas por página; las columnas salen de la rejilla (3 en escritorio, 2 en tableta, 1 en móvil).
+    const pageSize = () => {
+      const cols = getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).length || 1;
+      return cols * 2;
+    };
+    let page = 0;
+
+    const render = (dir = 0) => {
+      const area = select.value;
+      const matching = cards.filter((c) => !area || (c.dataset.areas ?? '').split(' ').includes(area));
+      const size = pageSize();
+      const pages = Math.max(1, Math.ceil(matching.length / size));
+      page = Math.min(Math.max(page, 0), pages - 1);
+      const start = page * size;
+      const shown = new Set(matching.slice(start, start + size));
+      cards.forEach((c) => (c.hidden = !shown.has(c)));
+
+      count.textContent =
+        pages > 1 ? t.range(start + 1, Math.min(start + size, matching.length), matching.length, cards.length) : t.count(matching.length, cards.length);
+
+      pager.hidden = pages < 2;
+      prev.disabled = page === 0;
+      next.disabled = page === pages - 1;
+      dots.replaceChildren(
+        ...Array.from({ length: pages }, (_, i) => {
+          const li = document.createElement('li');
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'dot';
+          b.setAttribute('aria-label', t.pager.page(i + 1, pages));
+          if (i === page) b.setAttribute('aria-current', 'true');
+          b.addEventListener('click', () => go(i - page, i));
+          li.append(b);
+          return li;
+        }),
+      );
+
+      if (dir && !reduceMotion.matches) {
+        list.classList.remove('slide-next', 'slide-prev');
+        void list.offsetWidth;
+        list.classList.add(dir > 0 ? 'slide-next' : 'slide-prev');
+      }
+    };
+
+    const go = (dir: number, to = page + dir) => {
+      if (to === page) return;
+      page = to;
+      render(dir);
+    };
+
+    prev.addEventListener('click', () => go(-1));
+    next.addEventListener('click', () => go(1));
+    select.addEventListener('change', () => {
+      page = 0;
+      render();
+    });
+
+    // Flechas del teclado cuando el foco está en los controles del carrusel.
+    pager.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && !prev.disabled) go(-1);
+      if (e.key === 'ArrowRight' && !next.disabled) go(1);
+    });
+
+    // Deslizar con el dedo en pantallas táctiles.
+    let x0: number | null = null;
+    carousel.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
+    carousel.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) < 50) return;
+      if (dx < 0 && !next.disabled) go(1);
+      if (dx > 0 && !prev.disabled) go(-1);
+    });
+
+    // Si cambia el número de columnas (giro o cambio de ancho), se recalcula la página.
+    let lastSize = pageSize();
+    new ResizeObserver(() => {
+      const s = pageSize();
+      if (s !== lastSize) {
+        page = Math.floor((page * lastSize) / s);
+        lastSize = s;
+        render();
+      }
+    }).observe(list);
+
+    // Sin JS se ven todas las tarjetas; con JS, por páginas. El navegador puede restaurar el área al volver atrás.
+    render();
 
     // Ventanas flotantes: el foco vuelve al enlace que las abrió.
     let opener: HTMLElement | null = null;
@@ -227,6 +333,66 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
     margin-bottom: 1rem;
   }
 
+  .filter-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+
+  .select-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  /* Mismo lenguaje visual que los antiguos botones de filtro: píldora con borde verde mar. */
+  .filter-select {
+    appearance: none;
+    min-height: 2.75rem;
+    min-width: 15rem;
+    padding: 0.35rem 2.6rem 0.35rem 1rem;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sea);
+    background: var(--card);
+    border: 1.5px solid var(--sea);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .filter-select:hover {
+    background: rgb(31 107 96 / 0.08);
+  }
+
+  .filter-select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 1.1rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid var(--sea);
+    border-bottom: 2px solid var(--sea);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  .card-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    object-position: center top;
+    background: var(--navy);
+    border-bottom: 1px solid var(--rule);
+  }
+
   .count {
     margin: 0;
     font-size: 0.92rem;
@@ -238,8 +404,127 @@ const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
+  }
+
+  @media (min-width: 40rem) {
+    .cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cards.slide-next {
+      animation: slide-in-next 0.32s ease;
+    }
+
+    .cards.slide-prev {
+      animation: slide-in-prev 0.32s ease;
+    }
+  }
+
+  @keyframes slide-in-next {
+    from {
+      opacity: 0;
+      transform: translateX(2.5rem);
+    }
+  }
+
+  @keyframes slide-in-prev {
+    from {
+      opacity: 0;
+      transform: translateX(-2.5rem);
+    }
+  }
+
+  .carousel {
+    overflow-x: clip;
+  }
+
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .pager[hidden] {
+    display: none;
+  }
+
+  .pager-btn {
+    width: 2.9rem;
+    height: 2.9rem;
+    display: grid;
+    place-items: center;
+    font: inherit;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--sea);
+    background: var(--card);
+    border: 1.5px solid var(--sea);
+    border-radius: 999px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .pager-btn:hover:not(:disabled) {
+    background: var(--sea);
+    color: #fff;
+  }
+
+  .pager-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .pager-btn:focus-visible,
+  .dots :global(.dot:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 0.35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Puntos de 24 px de zona táctil con un indicador visible más pequeño. */
+  .dots :global(.dot) {
+    min-width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .dots :global(.dot)::before {
+    content: '';
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--sea);
+    background: transparent;
+    transition: width 0.2s ease;
+  }
+
+  .dots :global(.dot[aria-current='true'])::before {
+    width: 1.6rem;
+    background: var(--sea);
   }
 
   .card {

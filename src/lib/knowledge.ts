@@ -101,7 +101,7 @@ export function buildKnowledge(lang: Lang): Chunk[] {
     out.push({
       id: `project-${p.id}`,
       title: x.title,
-      url: routeFor(p.route, lang),
+      url: p.route ? routeFor(p.route, lang) : (p.links.code ?? home),
       text: [
         x.context,
         x.summary,

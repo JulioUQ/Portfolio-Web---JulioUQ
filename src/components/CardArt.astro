@@ -1,7 +1,9 @@
 ---
 /** Miniaturas esquemáticas de las tarjetas (decorativas). */
+import type { ProjectArt } from '../content/projects';
+
 interface Props {
-  kind: 'halibut' | 'map' | 'fleet' | 'scraping' | 'course' | 'platform';
+  kind: ProjectArt;
 }
 
 const { kind } = Astro.props;
@@ -108,6 +110,127 @@ const { kind } = Astro.props;
       </g>
     )
   }
+  {
+    kind === 'clusters' && (
+      <g>
+        <ellipse cx="96" cy="62" rx="42" ry="30" class="hull" />
+        <ellipse cx="214" cy="52" rx="38" ry="26" class="hull" />
+        <ellipse cx="166" cy="112" rx="40" ry="24" class="hull alt" />
+        {[[80, 55], [96, 70], [110, 52], [88, 80], [118, 68], [74, 66]].map(([x, y]) => <circle cx={x} cy={y} r="4.5" class="pt" />)}
+        {[[200, 44], [224, 58], [212, 38], [230, 46], [204, 62]].map(([x, y]) => <circle cx={x} cy={y} r="4.5" class="pt" />)}
+        {[[150, 108], [168, 118], [182, 104], [160, 98], [176, 124]].map(([x, y]) => <circle cx={x} cy={y} r="4.5" class="pt hot" />)}
+        <text x="34" y="140" class="label">k = 3</text>
+      </g>
+    )
+  }
+  {
+    kind === 'neural' && (
+      <g>
+        {[
+          [70, [44, 74, 104]],
+          [140, [34, 59, 84, 109]],
+          [210, [34, 59, 84, 109]],
+          [270, [74]],
+        ].map(([x, ys], li, layers) =>
+          (ys as number[]).map((y) =>
+            li < layers.length - 1
+              ? (layers[li + 1][1] as number[]).map((y2) => (
+                  <line x1={x as number} y1={y} x2={layers[li + 1][0] as number} y2={y2} class="edge" />
+                ))
+              : null,
+          ),
+        )}
+        {[
+          [70, [44, 74, 104]],
+          [140, [34, 59, 84, 109]],
+          [210, [34, 59, 84, 109]],
+        ].map(([x, ys]) => (ys as number[]).map((y) => <circle cx={x as number} cy={y} r="7" class="neuron" />))}
+        <circle cx="270" cy="74" r="8" class="neuron out" />
+      </g>
+    )
+  }
+  {
+    kind === 'dashboard' && (
+      <g>
+        <rect x="40" y="18" width="240" height="114" rx="6" class="page" />
+        <rect x="40" y="18" width="52" height="114" rx="6" class="side" />
+        {[34, 50, 66].map((y) => <line x1="50" x2="82" y1={y} y2={y} class="row" />)}
+        {[0, 1, 2].map((i) => <rect x={104 + i * 58} y="30" width="50" height="24" rx="3" class={i === 0 ? 'kpi hot' : 'kpi'} />)}
+        {[30, 44, 36, 56, 48, 62].map((h, i) => <rect x={108 + i * 16} y={120 - h} width="10" height={h} class="bar" />)}
+        <path d="M212 112 L230 96 L246 102 L266 78" class="curve" />
+      </g>
+    )
+  }
+  {
+    kind === 'spark' && (
+      <g>
+        <rect x="128" y="18" width="64" height="30" rx="5" class="node db" />
+        <text x="160" y="38" class="label" text-anchor="middle">driver</text>
+        {[0, 1, 2, 3].map((i) => (
+          <g>
+            <path d={`M160 48 L${58 + i * 68} 88`} class="arrow" />
+            <rect x={34 + i * 68} y="88" width="48" height="34" rx="5" class="node" />
+            {[0, 1, 2].map((j) => <rect x={40 + i * 68 + j * 13} y="98" width="9" height="14" class="block" />)}
+          </g>
+        ))}
+        <text x="34" y="142" class="label">HDFS · RDD · DataFrame</text>
+      </g>
+    )
+  }
+  {
+    kind === 'stream' && (
+      <g>
+        <line x1="24" y1="70" x2="296" y2="70" class="axis" />
+        {[34, 52, 61, 78, 96, 104, 121, 139, 150, 167, 185, 196, 214, 231, 240, 258, 276].map((x, i) => (
+          <circle cx={x} cy={70} r="4.5" class={i % 5 === 0 ? 'pt hot' : 'pt'} />
+        ))}
+        {[24, 116, 208].map((x) => <rect x={x} y="88" width="88" height="34" rx="4" class="window" />)}
+        {[24, 116, 208].map((x, i) => (
+          <text x={x + 44} y="110" class="label" text-anchor="middle">{`Σ ${[5, 6, 6][i]}`}</text>
+        ))}
+        <text x="24" y="44" class="label">topic → 60 s</text>
+      </g>
+    )
+  }
+  {
+    kind === 'story' && (
+      <g>
+        {[0, 1, 2].map((i) => (
+          <g>
+            <rect x={30 + i * 92} y="36" width="72" height="72" rx="5" class={i === 2 ? 'page hot-page' : 'page'} />
+            <text x={66 + i * 92} y="30" class="label" text-anchor="middle">{`${i + 1}`}</text>
+            {i < 2 && <path d={`M${104 + i * 92} 72 H${120 + i * 92}`} class="arrow" />}
+          </g>
+        ))}
+        {[22, 34, 28, 44].map((h, i) => <rect x={40 + i * 14} y={98 - h} width="9" height={h} class="bar" />)}
+        <path d="M128 92 L144 76 L158 82 L178 54" class="curve" />
+        <circle cx="250" cy="66" r="16" class="pt hot" />
+        <path d="M242 66 L248 72 L259 59" class="check" />
+      </g>
+    )
+  }
+  {
+    kind === 'candles' && (
+      <g>
+        <line x1="34" y1="128" x2="290" y2="128" class="axis" />
+        {[
+          [60, 62, 96, 50, 104, true],
+          [88, 70, 92, 60, 100, false],
+          [116, 54, 74, 44, 82, true],
+          [144, 46, 66, 36, 72, true],
+          [172, 52, 70, 44, 80, false],
+          [200, 38, 58, 28, 64, true],
+          [228, 30, 46, 22, 54, true],
+          [256, 34, 50, 26, 58, false],
+        ].map(([x, top, bottom, high, low, up]) => (
+          <g>
+            <line x1={x as number} x2={x as number} y1={high as number} y2={low as number} class="wick" />
+            <rect x={(x as number) - 7} y={top as number} width="14" height={(bottom as number) - (top as number)} class={up ? 'candle up' : 'candle down'} />
+          </g>
+        ))}
+      </g>
+    )
+  }
 </svg>
 
 <style>
@@ -115,8 +238,8 @@ const { kind } = Astro.props;
     display: block;
     width: 100%;
     height: auto;
-    /* Franja más baja que el dibujo: se centra y los lados quedan en el mismo azul. */
-    aspect-ratio: 32 / 9;
+    /* Misma proporción que las miniaturas con imagen (2:1); el dibujo se centra y los lados quedan en el mismo azul. */
+    aspect-ratio: 2 / 1;
     background: var(--navy);
   }
 
@@ -240,6 +363,92 @@ const { kind } = Astro.props;
   }
 
   .bar-late {
+    fill: var(--accent);
+  }
+
+  .hull {
+    fill: var(--sea-soft);
+    fill-opacity: 0.12;
+    stroke: var(--sea-soft);
+    stroke-dasharray: 4 4;
+  }
+
+  .hull.alt {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+
+  .pt {
+    fill: var(--sea-soft);
+  }
+
+  .pt.hot {
+    fill: var(--accent);
+  }
+
+  .edge {
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.45;
+    stroke-width: 1;
+  }
+
+  .neuron {
+    fill: var(--navy-2);
+    stroke: var(--sea-soft);
+    stroke-width: 2;
+  }
+
+  .neuron.out {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+
+  .side {
+    fill: var(--navy-line);
+    fill-opacity: 0.6;
+  }
+
+  .kpi {
+    fill: var(--navy-2);
+    stroke: var(--sea-soft);
+  }
+
+  .kpi.hot {
+    stroke: var(--accent);
+  }
+
+  .block {
+    fill: var(--sea-soft);
+    fill-opacity: 0.8;
+  }
+
+  .window {
+    fill: var(--accent);
+    fill-opacity: 0.12;
+    stroke: var(--accent);
+    stroke-dasharray: 4 3;
+  }
+
+  .hot-page {
+    stroke: var(--accent);
+  }
+
+  .check {
+    fill: none;
+    stroke: var(--navy);
+    stroke-width: 3;
+  }
+
+  .wick {
+    stroke: var(--on-navy-muted);
+    stroke-width: 1.5;
+  }
+
+  .candle.up {
+    fill: var(--sea-soft);
+  }
+
+  .candle.down {
     fill: var(--accent);
   }
 </style>
