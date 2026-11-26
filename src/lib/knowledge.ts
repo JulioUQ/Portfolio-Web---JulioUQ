@@ -69,7 +69,7 @@ export function buildKnowledge(lang: Lang): Chunk[] {
     id: 'home-hero',
     title: t.meta.title,
     url: home,
-    text: `${t.hero.name}. ${t.hero.title}. ${t.hero.subtitle}`,
+    text: `Julio Úbeda Quesada. ${t.hero.title}. ${t.hero.subtitle}`,
   });
   out.push({
     id: 'home-background',
