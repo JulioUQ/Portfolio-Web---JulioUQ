@@ -5,15 +5,14 @@ import type { CaseContent } from './types';
 /**
  * Caso: plataforma local de analítica (n8n → SQL Server → Python → Dash).
  * Fuentes: README, GUIA_OPERATIVA.md, etl/n8n/README.md y publicacion/agregados_alquileres.json
- * del repositorio Plataforma-Analitica-Local. La demo pública respondía (HTTP 200) el 26/11/2026;
- * GitHub Pages distingue mayúsculas en la ruta, así que la URL debe conservar las del repositorio.
+ * del repositorio plataforma-analitica-local. La demo pública respondía (HTTP 200) el 25/11/2026.
  * No se reproducen cifras de la demo: son agregados reales de alquileres.
  */
 
 const repo = `<a href="${links.repoPlatform}">GitHub</a>`;
 const docs = `<a href="${links.docsPlatform}">Guía operativa</a>`;
 const docsEn = `<a href="${links.docsPlatform}">Operations guide (in Spanish)</a>`;
-const demo = `<a href="${links.sitePlatform}">juliouq.github.io/Plataforma-Analitica-Local</a>`;
+const demo = `<a href="${links.sitePlatform}">juliouq.github.io/plataforma-analitica-local</a>`;
 
 const es: CaseContent = {
   meta: {
