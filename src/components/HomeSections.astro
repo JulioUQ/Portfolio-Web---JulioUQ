@@ -4,6 +4,7 @@ import { routeFor } from '../i18n/routes';
 import { site } from '../content/site';
 import { links } from '../content/links';
 import { chat } from '../content/chat';
+import EducationBlock from './EducationBlock.astro';
 
 interface Props {
   lang: Lang;
@@ -38,14 +39,10 @@ const ask = chat[lang].section;
     <p class="more">
       <a class="btn btn-outline" href={routeFor('background', lang)}>{t.background.more} <span aria-hidden="true">→</span></a>
     </p>
-    <div class="education">
-      <h3>{t.background.education.heading}</h3>
-      <ul>
-        {t.background.education.items.map((item) => <li>{item}</li>)}
-      </ul>
-    </div>
   </div>
 </section>
+
+<EducationBlock lang={lang} id={t.ids.education} />
 
 <section id={t.ids.publications} class="section publications" aria-labelledby="h-publications">
   <div class="wrap">
@@ -72,7 +69,18 @@ const ask = chat[lang].section;
     </ol>
     <h3>{t.publications.talksHeading}</h3>
     <ul class="talks">
-      {t.publications.talks.map((talk) => <li>{talk}</li>)}
+      {
+        t.publications.talks.map((talk) => (
+          <li>
+            <span class="talk-emoji" aria-hidden="true">{talk.emoji}</span>
+            <span class="talk-text">
+              <span class="talk-type">{talk.type}</span>
+              <span class="talk-name">{talk.name}</span>
+            </span>
+            <span class="talk-year mono">{talk.year}</span>
+          </li>
+        ))
+      }
     </ul>
   </div>
 </section>
@@ -137,7 +145,6 @@ const ask = chat[lang].section;
   }
 
   .leg ul,
-  .education ul,
   .talks {
     list-style: none;
     margin: 0;
@@ -155,15 +162,6 @@ const ask = chat[lang].section;
     margin-bottom: 0.15rem;
   }
 
-  .education {
-    padding: 1.25rem 1.5rem;
-    background: var(--paper-2);
-    border-radius: var(--radius);
-  }
-
-  .education li {
-    padding: 0.3rem 0;
-  }
 
   @media (max-width: 52rem) {
     .transect {
@@ -221,8 +219,54 @@ const ask = chat[lang].section;
     font-weight: 600;
   }
 
+  .talks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+    max-width: 60rem;
+  }
+
   .talks li {
-    padding: 0.3rem 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .talk-emoji {
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    font-size: 1.45rem;
+    line-height: 1;
+    border-radius: 50%;
+    background: var(--paper-2);
+  }
+
+  .talk-text {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .talk-type {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .talk-name {
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .talk-year {
     color: var(--muted);
   }
 

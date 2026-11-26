@@ -1,7 +1,8 @@
 ---
 /** Página de trayectoria: cronología explorable, etapas y formación. */
 import Timeline from './Timeline.astro';
-import { backgroundPage, type Related, type EducationItem } from '../content/background';
+import { backgroundPage, type Related } from '../content/background';
+import { site } from '../content/site';
 import { routeFor, type Lang } from '../i18n/routes';
 
 interface Props {
@@ -11,11 +12,6 @@ interface Props {
 const { lang } = Astro.props;
 const b = backgroundPage[lang];
 const hrefOf = (r: Related) => ('href' in r ? r.href : `${routeFor(r.route, lang)}${r.hash ? `#${r.hash}` : ''}`);
-const groups: { heading: string; intro?: string; items: EducationItem[] }[] = [
-  b.education.degrees,
-  b.education.programs,
-  b.education.certifications,
-];
 ---
 
 <article class="bg-page">
@@ -61,47 +57,11 @@ const groups: { heading: string; intro?: string; items: EducationItem[] }[] = [
     </ol>
   </section>
 
-  <section class="wrap section-block" aria-labelledby="h-education">
-    <h2 id="h-education">{b.education.heading}</h2>
-    <p class="lead">{b.education.intro}</p>
-    <div class="edu-grid">
-      {
-        groups.map((g) => (
-          <section class="edu-group" aria-label={g.heading}>
-            <h3>{g.heading}</h3>
-            {g.intro && <p class="edu-intro">{g.intro}</p>}
-            <ul>
-              {g.items.map((it) => (
-                <li>
-                  <span class="edu-title">{it.title}</span>
-                  <span class="edu-org">
-                    {it.org}
-                    {it.period && <span class="mono"> · {it.period}</span>}
-                  </span>
-                  {(it.note || it.related) && (
-                    <span class="edu-rel">
-                      {it.note && <span>{it.note} </span>}
-                      {it.related?.map((r, i) => (
-                        <>
-                          {i > 0 && <span aria-hidden="true"> · </span>}
-                          <a href={hrefOf(r)}>{r.label}</a>
-                        </>
-                      ))}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
-      }
-      <section class="edu-group" aria-label={b.education.languages.heading}>
-        <h3>{b.education.languages.heading}</h3>
-        <ul>
-          {b.education.languages.items.map((l) => <li>{l}</li>)}
-        </ul>
-      </section>
-    </div>
+  <section class="wrap section-block pointer" aria-label={b.education.heading}>
+    <p>
+      {b.educationPointer.text}{' '}
+      <a href={`${routeFor('home', lang)}#${site[lang].ids.education}`}>{b.educationPointer.link} →</a>
+    </p>
   </section>
 </article>
 
@@ -186,55 +146,10 @@ const groups: { heading: string; intro?: string; items: EducationItem[] }[] = [
     font-weight: 600;
   }
 
-  .edu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-    gap: 1.25rem;
-  }
-
-  .edu-group {
-    padding: 1.1rem 1.25rem;
+  .pointer p {
+    max-width: 46rem;
+    padding: 1rem 1.25rem;
     background: var(--paper-2);
     border-radius: var(--radius);
-  }
-
-  .edu-group h3 {
-    font-size: 1.1rem;
-  }
-
-  .edu-intro {
-    margin: 0 0 0.5rem;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-
-  .edu-group ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .edu-group li {
-    display: grid;
-    gap: 0.1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .edu-group li:last-child {
-    border-bottom: 0;
-  }
-
-  .edu-title {
-    font-weight: 600;
-  }
-
-  .edu-org {
-    font-size: 0.92rem;
-    color: var(--muted);
-  }
-
-  .edu-rel {
-    font-size: 0.9rem;
   }
 </style>

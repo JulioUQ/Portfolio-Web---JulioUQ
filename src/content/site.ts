@@ -28,7 +28,7 @@ export interface SiteContent {
     footer: string;
   };
   nav: { label: string; target: Target }[];
-  ids: { projects: string; background: string; publications: string; ask: string; contact: string };
+  ids: { projects: string; background: string; education: string; publications: string; ask: string; contact: string };
   hero: {
     title: string;
     subtitle: string;
@@ -41,14 +41,13 @@ export interface SiteContent {
     intro: string;
     more: string;
     areas: { title: string; items: { period: string; text: string }[] }[];
-    education: { heading: string; items: string[] };
   };
   publications: {
     heading: string;
     articlesHeading: string;
     articles: { citation: string; role: string; href: string; caseLink?: { label: string; route: RouteKey } }[];
     talksHeading: string;
-    talks: string[];
+    talks: { emoji: string; type: string; name: string; year: string }[];
   };
   contact: { heading: string; text: string; github: string; linkedin: string };
 }
@@ -70,6 +69,7 @@ const es: SiteContent = {
   },
   ids: {
     projects: 'proyectos',
+    education: 'formacion',
     background: 'trayectoria',
     publications: 'publicaciones',
     ask: 'preguntame',
@@ -85,7 +85,7 @@ const es: SiteContent = {
   hero: {
     title: 'Ingeniería y ciencia de datos con experiencia en pesca y medio marino',
     subtitle:
-      'Me formé en ciencias del mar y he trabajado en investigación pesquera y en muestreo a bordo. Hoy trabajo en Tragsatec con datos del Sistema de Información Pesquera Español (SIPE), donde combino ingeniería de datos, análisis y mapas.',
+      'Construyo procesos de datos de principio a fin: extracción y ETL, análisis estadístico, modelos de machine learning y visualización con Python, R, SQL y QGIS. Vengo de las ciencias del mar y la investigación pesquera, y hoy aplico ese conocimiento en Tragsatec con datos del Sistema de Información Pesquera Español (SIPE).',
     primary: 'Ver proyectos',
     secondary: 'Conocer mi trayectoria',
     illustrationAlt: 'Ilustración en estilo vóxel de un observatorio marino con mapas y gráficos de datos',
@@ -132,14 +132,6 @@ const es: SiteContent = {
         ],
       },
     ],
-    education: {
-      heading: 'Formación',
-      items: [
-        'Grado en Ciencias del Mar · Universidad de Alicante',
-        'Máster en Gestión Pesquera Sostenible · Universidad de Alicante',
-        'Máster Universitario en Ciencia de Datos · Universitat Oberta de Catalunya',
-      ],
-    },
   },
   publications: {
     heading: 'Publicaciones',
@@ -161,9 +153,9 @@ const es: SiteContent = {
     ],
     talksHeading: 'Comunicaciones en congresos',
     talks: [
-      'Comunicación oral · ICES Annual Science Conference, 2023',
-      'Póster · III Congreso de Jóvenes Investigadores del Mar, 2021',
-      'Póster · XX Simposio Ibérico de Estudios de Biología Marina (SIEBM), 2019',
+      { emoji: '🌍', type: 'Comunicación oral', name: 'ICES Annual Science Conference', year: '2023' },
+      { emoji: '🌊', type: 'Póster', name: 'III Congreso de Jóvenes Investigadores del Mar', year: '2021' },
+      { emoji: '🐚', type: 'Póster', name: 'XX Simposio Ibérico de Estudios de Biología Marina (SIEBM)', year: '2019' },
     ],
   },
   contact: {
@@ -191,6 +183,7 @@ const en: SiteContent = {
   },
   ids: {
     projects: 'projects',
+    education: 'education',
     background: 'background',
     publications: 'publications',
     ask: 'ask',
@@ -206,7 +199,7 @@ const en: SiteContent = {
   hero: {
     title: 'Data engineering and data science for fisheries and the ocean',
     subtitle:
-      'I trained in marine science and have worked in fisheries research and sampling at sea. Today I work at Tragsatec with data from the Spanish Fisheries Information System (SIPE), combining data engineering, analysis and mapping.',
+      'I build data pipelines end to end: extraction and ETL, statistical analysis, machine learning models and visualisation with Python, R, SQL and QGIS. I come from marine science and fisheries research, and today I apply that background at Tragsatec with data from the Spanish Fisheries Information System (SIPE).',
     primary: 'See projects',
     secondary: 'Explore my background',
     illustrationAlt: 'Voxel-art illustration of a coastal observatory with maps and data charts',
@@ -253,14 +246,6 @@ const en: SiteContent = {
         ],
       },
     ],
-    education: {
-      heading: 'Education',
-      items: [
-        'BSc in Marine Sciences · University of Alicante',
-        'MSc in Sustainable Fisheries Management · University of Alicante',
-        'MSc in Data Science · Universitat Oberta de Catalunya',
-      ],
-    },
   },
   publications: {
     heading: 'Publications',
@@ -282,9 +267,9 @@ const en: SiteContent = {
     ],
     talksHeading: 'Conference contributions',
     talks: [
-      'Oral presentation · ICES Annual Science Conference, 2023',
-      'Poster · III Congress of Young Marine Researchers (Spain), 2021',
-      'Poster · XX Iberian Symposium on Marine Biology Studies (SIEBM), 2019',
+      { emoji: '🌍', type: 'Oral presentation', name: 'ICES Annual Science Conference', year: '2023' },
+      { emoji: '🌊', type: 'Poster', name: 'III Congress of Young Marine Researchers (Spain)', year: '2021' },
+      { emoji: '🐚', type: 'Poster', name: 'XX Iberian Symposium on Marine Biology Studies (SIEBM)', year: '2019' },
     ],
   },
   contact: {

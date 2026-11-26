@@ -1,0 +1,260 @@
+---
+/**
+ * Formación: titulaciones, programas, certificaciones e idiomas. Se muestra una sola vez,
+ * en la portada; la página de trayectoria enlaza aquí.
+ */
+import { backgroundPage, type EducationItem, type LanguageItem, type Related } from '../content/background';
+import { routeFor, type Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+  /** id de la sección (ancla de la portada). */
+  id: string;
+}
+
+const { lang, id } = Astro.props;
+const e = backgroundPage[lang].education;
+const hrefOf = (r: Related) => ('href' in r ? r.href : `${routeFor(r.route, lang)}${r.hash ? `#${r.hash}` : ''}`);
+const groups: { key: string; heading: string; intro?: string; items: EducationItem[] }[] = [
+  { key: 'degrees', ...e.degrees },
+  { key: 'programs', ...e.programs },
+  { key: 'certs', ...e.certifications },
+];
+const scale = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
+const filled = (l: LanguageItem) => (l.level === 'native' ? 6 : scale.indexOf(l.level) + 1);
+---
+
+<section id={id} class="section education" aria-labelledby={`h-${id}`}>
+  <div class="wrap">
+    <h2 id={`h-${id}`}>{e.heading}</h2>
+    <p class="section-intro">{e.intro}</p>
+    <div class="edu-grid">
+      <div class="edu-col">
+        {
+          groups
+            .filter((g) => g.key !== 'certs')
+            .map((g) => (
+              <section class={`edu-group ${g.key}`} aria-labelledby={`${id}-${g.key}`}>
+                <h3 id={`${id}-${g.key}`}>{g.heading}</h3>
+                <ul>
+                  {g.items.map((it) => (
+                    <li>
+                      <span class="edu-title">{it.title}</span>
+                      <span class="edu-org">
+                        {it.org}
+                        {it.period && <span class="mono"> · {it.period}</span>}
+                      </span>
+                      {(it.note || it.related) && (
+                        <span class="edu-rel">
+                          {it.note && <span>{it.note} </span>}
+                          {it.related?.map((r, i) => (
+                            <>
+                              {i > 0 && <span aria-hidden="true"> · </span>}
+                              <a href={hrefOf(r)}>{r.label}</a>
+                            </>
+                          ))}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+        }
+        <section class="edu-group languages" aria-labelledby={`${id}-langs`}>
+          <h3 id={`${id}-langs`}>{e.languages.heading}</h3>
+          <ul>
+            {
+              e.languages.items.map((l) => (
+                <li>
+                  <span class="lang-name">{l.name}</span>
+                  <span class="lang-level">{l.levelLabel}</span>
+                  <span class="scale" aria-hidden="true">
+                    {scale.map((_, i) => (
+                      <span class={i < filled(l) ? 'dot on' : 'dot'} />
+                    ))}
+                  </span>
+                  {l.cert && <span class="lang-cert">{l.cert}</span>}
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </div>
+      {
+        groups
+          .filter((g) => g.key === 'certs')
+          .map((g) => (
+            <section class="edu-group certs" aria-labelledby={`${id}-certs`}>
+              <h3 id={`${id}-certs`}>{g.heading}</h3>
+              {g.intro && <p class="edu-intro">{g.intro}</p>}
+              <ul>
+                {g.items.map((it) => (
+                  <li>
+                    <span class="edu-title">{it.title}</span>
+                    <span class="edu-org">{it.org}</span>
+                    {it.related && (
+                      <span class="edu-rel">
+                        {it.related.map((r, i) => (
+                          <>
+                            {i > 0 && <span aria-hidden="true"> · </span>}
+                            <a href={hrefOf(r)}>{r.label}</a>
+                          </>
+                        ))}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .edu-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .edu-col {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  /* Certificaciones en dos columnas internas en pantallas anchas. */
+  .certs ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.25rem;
+  }
+
+  .certs li:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .edu-group {
+    padding: 1.1rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-top: 4px solid var(--sea);
+    border-radius: var(--radius);
+  }
+
+  .edu-group.programs {
+    border-top-color: var(--accent);
+  }
+
+  .edu-group.certs {
+    border-top-color: var(--navy-line);
+  }
+
+  .edu-group h3,
+  .languages h3 {
+    font-size: 1.1rem;
+  }
+
+  .edu-intro {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .edu-group ul,
+  .languages ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .edu-group li {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--paper-2);
+  }
+
+  .edu-group li:last-child {
+    border-bottom: 0;
+  }
+
+  .edu-title {
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .edu-org {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .edu-rel {
+    font-size: 0.9rem;
+  }
+
+  /* Idiomas: nivel en texto y escala MCER (A1–C2) como apoyo visual. */
+  .languages {
+    border-top-color: var(--sea-soft);
+  }
+
+  .languages li {
+    grid-template-columns: 5.5rem auto 1fr;
+    align-items: center;
+    column-gap: 0.6rem;
+  }
+
+  .lang-name {
+    font-weight: 700;
+  }
+
+  .lang-level {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .scale {
+    display: inline-flex;
+    gap: 3px;
+  }
+
+  .dot {
+    width: 0.7rem;
+    height: 0.45rem;
+    border-radius: 2px;
+    background: var(--rule);
+  }
+
+  .dot.on {
+    background: var(--sea);
+  }
+
+  .lang-cert {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 60rem) {
+    .edu-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .certs ul {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .certs li:nth-last-child(2) {
+      border-bottom: 1px solid var(--paper-2);
+    }
+  }
+</style>

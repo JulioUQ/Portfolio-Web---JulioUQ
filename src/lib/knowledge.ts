@@ -78,7 +78,6 @@ export function buildKnowledge(lang: Lang): Chunk[] {
     text: [
       t.background.intro,
       ...t.background.areas.map((a) => `${a.title}: ${a.items.map((i) => `${i.period} ${stripHtml(i.text)}`).join(' ')}`),
-      `${t.background.education.heading}: ${t.background.education.items.join('; ')}`,
     ].join('\n'),
   });
   out.push({
@@ -87,7 +86,7 @@ export function buildKnowledge(lang: Lang): Chunk[] {
     url: `${home}#${t.ids.publications}`,
     text: [
       ...t.publications.articles.map((a) => `${a.role}: ${stripHtml(a.citation)} ${a.href}`),
-      `${t.publications.talksHeading}: ${t.publications.talks.join('; ')}`,
+      `${t.publications.talksHeading}: ${t.publications.talks.map((x) => `${x.type} · ${x.name}, ${x.year}`).join('; ')}`,
     ].join('\n'),
   });
   out.push({
@@ -177,13 +176,13 @@ export function buildKnowledge(lang: Lang): Chunk[] {
     out.push({
       id: `bg-edu-${g.heading}`,
       title: `${e.heading} · ${g.heading}`,
-      url: `${bg}#h-education`,
+      url: `${home}#${t.ids.education}`,
       text: g.items
         .map((i) => `${i.title} (${i.org}${i.period ? `, ${i.period}` : ''})${i.related ? `: ${i.related.map((r) => r.label).join(', ')}` : ''}`)
         .join('\n'),
     });
   }
-  out.push({ id: 'bg-languages', title: `${e.heading} · ${e.languages.heading}`, url: `${bg}#h-education`, text: e.languages.items.join('; ') });
+  out.push({ id: 'bg-languages', title: `${e.heading} · ${e.languages.heading}`, url: `${home}#${t.ids.education}`, text: e.languages.items.map((l) => `${l.name}: ${l.levelLabel}${l.cert ? ` (${l.cert})` : ''}`).join('; ') });
 
   return out;
 }

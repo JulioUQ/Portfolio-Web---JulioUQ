@@ -265,6 +265,14 @@ export interface EducationItem {
   related?: Related[];
 }
 
+/** Idioma con su nivel del Marco Común Europeo (MCER); «native» llena la escala. */
+export interface LanguageItem {
+  name: string;
+  level: 'native' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  levelLabel: string;
+  cert?: string;
+}
+
 export interface BackgroundPage {
   meta: { title: string; description: string };
   kicker: string;
@@ -285,13 +293,15 @@ export interface BackgroundPage {
   };
   stagesHeading: string;
   stages: Stage[];
+  /** La formación completa se muestra en la portada; aquí solo se enlaza. */
+  educationPointer: { text: string; link: string };
   education: {
     heading: string;
     intro: string;
     degrees: { heading: string; items: EducationItem[] };
     programs: { heading: string; items: EducationItem[] };
     certifications: { heading: string; intro: string; items: EducationItem[] };
-    languages: { heading: string; items: string[] };
+    languages: { heading: string; items: LanguageItem[] };
   };
 }
 
@@ -321,6 +331,10 @@ const es: BackgroundPage = {
     listHeading: 'Detalle del hito',
   },
   stagesHeading: 'Etapas',
+  educationPointer: {
+    text: 'La cronología incluye las titulaciones; el detalle de la formación, las certificaciones y los idiomas está en la portada.',
+    link: 'Ver formación',
+  },
   stages: [
     {
       id: 'investigacion',
@@ -369,7 +383,7 @@ const es: BackgroundPage = {
   education: {
     heading: 'Formación',
     intro:
-      'Titulaciones universitarias, programas especializados y una selección de certificaciones que aportan contexto a los proyectos de esta web.',
+      'Titulaciones universitarias, programas especializados, certificaciones relacionadas con los proyectos de esta web e idiomas.',
     degrees: {
       heading: 'Titulaciones universitarias',
       items: [
@@ -436,9 +450,9 @@ const es: BackgroundPage = {
     languages: {
       heading: 'Idiomas',
       items: [
-        'Español: nativo',
-        'Inglés: C1 (Advanced Certificate, University of Cambridge)',
-        'Francés: B1 (Escuela Oficial de Idiomas)',
+        { name: 'Español', level: 'native', levelLabel: 'Nativo' },
+        { name: 'Inglés', level: 'C1', levelLabel: 'C1', cert: 'Advanced Certificate · University of Cambridge' },
+        { name: 'Francés', level: 'B1', levelLabel: 'B1', cert: 'Escuela Oficial de Idiomas' },
       ],
     },
   },
@@ -470,6 +484,10 @@ const en: BackgroundPage = {
     listHeading: 'Milestone details',
   },
   stagesHeading: 'Stages',
+  educationPointer: {
+    text: 'The timeline includes the degrees; full details of education, certifications and languages are on the home page.',
+    link: 'See education',
+  },
   stages: [
     {
       id: 'research',
@@ -518,7 +536,7 @@ const en: BackgroundPage = {
   education: {
     heading: 'Education',
     intro:
-      'University degrees, specialised programmes and a selection of certifications that give context to the projects on this site.',
+      'University degrees, specialised programmes, certifications related to the projects on this site, and languages.',
     degrees: {
       heading: 'University degrees',
       items: [
@@ -571,9 +589,9 @@ const en: BackgroundPage = {
     languages: {
       heading: 'Languages',
       items: [
-        'Spanish: native',
-        'English: C1 (Advanced Certificate, University of Cambridge)',
-        'French: B1 (Official School of Languages, Spain)',
+        { name: 'Spanish', level: 'native', levelLabel: 'Native' },
+        { name: 'English', level: 'C1', levelLabel: 'C1', cert: 'Advanced Certificate · University of Cambridge' },
+        { name: 'French', level: 'B1', levelLabel: 'B1', cert: 'Official School of Languages (Spain)' },
       ],
     },
   },
