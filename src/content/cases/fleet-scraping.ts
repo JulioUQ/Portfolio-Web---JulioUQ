@@ -1,4 +1,4 @@
-import type { Lang } from '../../i18n/routes';
+import { routeFor, type Lang } from '../../i18n/routes';
 import { links } from '../links';
 import type { CaseContent } from './types';
 
@@ -122,7 +122,7 @@ const es: CaseContent = {
       blocks: [
         {
           type: 'p',
-          html: 'Este proyecto <strong>obtiene</strong> los datos; el <a href="/es/casos/flota-pesquera/">análisis de la flota</a> los <strong>limpia, explora y modela</strong>. El README del repositorio del análisis indica que su carpeta de datos contiene el archivo generado aquí, <code>datos_buques_ESP.csv</code>, como entrada.',
+          html: `Este proyecto <strong>obtiene</strong> los datos; el <a href="${routeFor('fleet', 'es')}">análisis de la flota</a> los <strong>limpia, explora y modela</strong>. El README del repositorio del análisis indica que su carpeta de datos contiene el archivo generado aquí, <code>datos_buques_ESP.csv</code>, como entrada.`,
         },
       ],
     },
@@ -260,7 +260,7 @@ const en: CaseContent = {
       blocks: [
         {
           type: 'p',
-          html: 'This project <strong>collects</strong> the data; the <a href="/en/case-studies/fishing-fleet/">fleet analysis</a> <strong>cleans, explores and models</strong> them. The analysis repository’s README states that its data folder contains the file produced here, <code>datos_buques_ESP.csv</code>, as input.',
+          html: `This project <strong>collects</strong> the data; the <a href="${routeFor('fleet', 'en')}">fleet analysis</a> <strong>cleans, explores and models</strong> them. The analysis repository’s README states that its data folder contains the file produced here, <code>datos_buques_ESP.csv</code>, as input.`,
         },
       ],
     },

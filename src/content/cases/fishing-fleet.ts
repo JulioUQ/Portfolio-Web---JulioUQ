@@ -1,4 +1,4 @@
-import type { Lang } from '../../i18n/routes';
+import { routeFor, type Lang } from '../../i18n/routes';
 import { links } from '../links';
 import type { CaseContent } from './types';
 
@@ -49,7 +49,7 @@ const es: CaseContent = {
       blocks: [
         {
           type: 'p',
-          html: 'El punto de partida es el conjunto de datos obtenido en la práctica anterior mediante <a href="/es/casos/web-scraping-flota/">web scraping del registro europeo y del registro español de buques</a>: una fila por buque, identificada por su CFR, con 16 campos tal como aparecen en la web del registro.',
+          html: `El punto de partida es el conjunto de datos obtenido en la práctica anterior mediante <a href="${routeFor('scraping', 'es')}">web scraping del registro europeo y del registro español de buques</a>: una fila por buque, identificada por su CFR, con 16 campos tal como aparecen en la web del registro.`,
         },
         {
           type: 'p',
@@ -214,7 +214,7 @@ const en: CaseContent = {
       blocks: [
         {
           type: 'p',
-          html: 'The starting point is the dataset built in the previous assignment by <a href="/en/case-studies/fleet-web-scraping/">web scraping the EU and Spanish vessel registers</a>: one row per vessel, identified by its CFR, with 16 fields as they appear on the register website.',
+          html: `The starting point is the dataset built in the previous assignment by <a href="${routeFor('scraping', 'en')}">web scraping the EU and Spanish vessel registers</a>: one row per vessel, identified by its CFR, with 16 fields as they appear on the register website.`,
         },
         {
           type: 'p',
