@@ -1,7 +1,7 @@
 # Ejemplo reproducible · Generador de mapas interactivos
 
 Genera el mapa que ilustra el caso `/es/casos/generador-de-mapas/` con **datos ficticios** y el motor del
-repositorio [App-Generador_de_Mapas_Interactivos](https://github.com/JulioUQ/App-Generador_de_Mapas_Interactivos).
+repositorio [app-generador-mapas](https://github.com/JulioUQ/app-generador-mapas).
 No usa capas de referencia ni datos reales.
 
 | Archivo | Qué es |

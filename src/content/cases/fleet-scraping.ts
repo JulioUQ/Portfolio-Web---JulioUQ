@@ -5,8 +5,8 @@ import type { CaseContent } from './types';
 /**
  * Caso: web scraping del registro de la flota pesquera (PR1 del máster de la UOC, en pareja).
  * Fuentes: README, scripts de «1. Scripts/src» y memoria de la PR1 del repositorio
- * WebScrapping-con-Selenium-y-BeautifulSoup. La relación con el caso de la flota está respaldada
- * por el README de Data-Science-Pescas-Limpieza-y-Modelado (su carpeta data/ contiene los datos de la PR1).
+ * datos-web-scraping-flota. La relación con el caso de la flota está respaldada
+ * por el README de ml-flota-pesquera (su carpeta data/ contiene los datos de la PR1).
  */
 
 const repo = `<a href="${links.repoScraping}">GitHub</a>`;

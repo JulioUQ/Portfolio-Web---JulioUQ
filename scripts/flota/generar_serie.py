@@ -2,7 +2,7 @@
 Serie anual de la flota pesquera española para la visualización del portfolio.
 
 Entrada: data/data_clean_v2.csv del repositorio
-  https://github.com/JulioUQ/Data-Science-Pescas-Limpieza-y-Modelado
+  https://github.com/JulioUQ/ml-flota-pesquera
   (registro de buques obtenido por web scraping en la PR1 y limpiado en la PR2).
 
 Transformación:
@@ -52,7 +52,7 @@ for (gear, ca), g in df.groupby([gear_col, ca_col]):
     series[f"{gear}|{ca}"] = {"n": n, "kw": kw, "gt": gt}
 
 out = {
-    "source": "data/data_clean_v2.csv · JulioUQ/Data-Science-Pescas-Limpieza-y-Modelado",
+    "source": "data/data_clean_v2.csv · JulioUQ/ml-flota-pesquera",
     "rows": int(len(df)),
     "years": YEARS,
     "gears": sorted(df[gear_col].dropna().unique().tolist()),

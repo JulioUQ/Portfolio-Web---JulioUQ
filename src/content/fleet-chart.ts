@@ -53,7 +53,7 @@ export const fleetChart: Record<Lang, FleetChartContent> = {
         '<strong>Regla.</strong> Un buque cuenta en un año si su alta es anterior al 31 de diciembre y no tenía una baja (definitiva o provisional) con fecha anterior.',
         '<strong>Categorías.</strong> El tipo de arte es la agrupación del proyecto sobre el censo por modalidad, y la comunidad autónoma es la del puerto base. Ambas son las últimas registradas en 2025: un buque que cambió de modalidad aparece siempre en la última.',
         '<strong>Periodo.</strong> Empieza en 1989, primer año completo tras la carga inicial del registro, y termina en 2024, último año completo antes de la extracción (abril de 2025).',
-        '<strong>Fuente.</strong> <code>data/data_clean_v2.csv</code> del repositorio Data-Science-Pescas-Limpieza-y-Modelado (27.364 buques; datos públicos del Ministerio de Agricultura, Pesca y Alimentación). La serie se calcula con <code>scripts/flota/generar_serie.py</code> de este portfolio.',
+        '<strong>Fuente.</strong> <code>data/data_clean_v2.csv</code> del repositorio ml-flota-pesquera (27.364 buques; datos públicos del Ministerio de Agricultura, Pesca y Alimentación). La serie se calcula con <code>scripts/flota/generar_serie.py</code> de este portfolio.',
       ],
     },
     text: {
@@ -90,7 +90,7 @@ export const fleetChart: Record<Lang, FleetChartContent> = {
         '<strong>Rule.</strong> A vessel counts in a year if it was registered before 31 December and had no removal (permanent or temporary) dated earlier.',
         '<strong>Categories.</strong> Gear type is the project’s grouping of the census category, and the region is that of the home port. Both are the latest recorded in 2025: a vessel that changed category always appears in the latest one.',
         '<strong>Period.</strong> It starts in 1989, the first full year after the register’s initial load, and ends in 2024, the last full year before extraction (April 2025).',
-        '<strong>Source.</strong> <code>data/data_clean_v2.csv</code> in the Data-Science-Pescas-Limpieza-y-Modelado repository (27,364 vessels; public data from the Spanish Ministry of Agriculture, Fisheries and Food). The series is computed with this portfolio’s <code>scripts/flota/generar_serie.py</code>.',
+        '<strong>Source.</strong> <code>data/data_clean_v2.csv</code> in the ml-flota-pesquera repository (27,364 vessels; public data from the Spanish Ministry of Agriculture, Fisheries and Food). The series is computed with this portfolio’s <code>scripts/flota/generar_serie.py</code>.',
       ],
     },
     text: {

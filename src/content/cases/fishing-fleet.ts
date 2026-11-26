@@ -5,12 +5,12 @@ import type { CaseContent } from './types';
 /**
  * Caso: análisis de la flota pesquera española (PR2 del máster de la UOC, en pareja).
  * Fuentes: README, cuadernos src/Limpieza-datos_v2.ipynb y src/Modelado.ipynb y memoria del repositorio
- * Data-Science-Pescas-Limpieza-y-Modelado. Las métricas salen de las salidas impresas del cuaderno;
+ * ml-flota-pesquera. Las métricas salen de las salidas impresas del cuaderno;
  * cuando el README difiere del código (p. ej. «KNN»), se sigue el código (KMeans).
  */
 
 const repo = `<a href="${links.repoFleet}">GitHub</a>`;
-const dashRepo = `<a href="${links.repoFleetDashboard}">Analisis-tecnico-de-la-flota-pesquera</a>`;
+const dashRepo = `<a href="${links.repoFleetDashboard}">app-dashboard-flota-pesquera</a>`;
 
 const es: CaseContent = {
   meta: {
