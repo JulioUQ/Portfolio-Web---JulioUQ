@@ -30,12 +30,11 @@ export interface SiteContent {
   nav: { label: string; target: Target }[];
   ids: { projects: string; background: string; publications: string; ask: string; contact: string };
   hero: {
-    name: string;
     title: string;
     subtitle: string;
     primary: string;
     secondary: string;
-    illustrationNote: string;
+    illustrationAlt: string;
   };
   background: {
     heading: string;
@@ -84,13 +83,12 @@ const es: SiteContent = {
     { label: 'Contacto', target: { kind: 'internal', route: 'home', hash: 'contacto' } },
   ],
   hero: {
-    name: 'Julio Úbeda Quesada',
     title: 'Ingeniería y ciencia de datos con experiencia en pesca y medio marino',
     subtitle:
       'Me formé en ciencias del mar y he trabajado en investigación pesquera y en muestreo a bordo. Hoy trabajo en Tragsatec con datos del Sistema de Información Pesquera Español (SIPE), donde combino ingeniería de datos, análisis y mapas.',
     primary: 'Ver proyectos',
     secondary: 'Conocer mi trayectoria',
-    illustrationNote: 'Ilustración esquemática de una carta náutica',
+    illustrationAlt: 'Ilustración en estilo vóxel de un observatorio marino con mapas y gráficos de datos',
   },
   background: {
     heading: 'Trayectoria',
@@ -206,13 +204,12 @@ const en: SiteContent = {
     { label: 'Contact', target: { kind: 'internal', route: 'home', hash: 'contact' } },
   ],
   hero: {
-    name: 'Julio Úbeda Quesada',
     title: 'Data engineering and data science for fisheries and the ocean',
     subtitle:
       'I trained in marine science and have worked in fisheries research and sampling at sea. Today I work at Tragsatec with data from the Spanish Fisheries Information System (SIPE), combining data engineering, analysis and mapping.',
     primary: 'See projects',
     secondary: 'Explore my background',
-    illustrationNote: 'Schematic nautical chart illustration',
+    illustrationAlt: 'Voxel-art illustration of a coastal observatory with maps and data charts',
   },
   background: {
     heading: 'Background',
