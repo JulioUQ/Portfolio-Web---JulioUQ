@@ -1,0 +1,656 @@
+---
+/**
+ * Chat accesible desde todas las páginas. La web sigue siendo estática: el chat llama a una API
+ * aparte (carpeta api/) cuya URL se fija al construir con PUBLIC_CHAT_API_URL.
+ * La conversación solo vive en memoria mientras la página está abierta.
+ */
+import { chat, CHAT_MAX_CHARS } from '../content/chat';
+import { routeFor, type Lang } from '../i18n/routes';
+import { site } from '../content/site';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = chat[lang];
+const published = import.meta.env.PUBLIC_PORTFOLIO_PUBLISHED === 'true';
+const apiUrl = (import.meta.env.PUBLIC_CHAT_API_URL || (published ? '' : 'http://localhost:8787')).replace(/\/$/, '');
+const home = routeFor('home', lang);
+---
+
+<div class="chat-root" data-chat data-lang={lang} data-api={apiUrl}>
+  <button type="button" class="chat-launcher" data-open-chat aria-haspopup="dialog">
+    <span aria-hidden="true" class="launcher-icon">?</span>
+    <span>{c.launcher}</span>
+  </button>
+
+  <dialog class="chat-dialog" aria-labelledby="chat-title" aria-describedby="chat-intro">
+    <div class="chat-shell">
+      <header class="chat-head">
+        <div>
+          <h2 id="chat-title">{c.title}</h2>
+          <p class="chat-status" data-status>{c.states.checking}</p>
+        </div>
+        <div class="head-actions">
+          <button type="button" class="chat-reset" data-reset>{c.reset}</button>
+          <button type="button" class="chat-close" data-close>
+            <span aria-hidden="true">×</span>
+            <span class="visually-hidden">{c.close}</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="chat-log" data-log role="log" aria-live="polite" aria-relevant="additions">
+        <div class="chat-welcome" data-welcome>
+          <p id="chat-intro">{c.intro}</p>
+          <div class="unconfigured" data-unconfigured hidden>
+            <p><strong>{c.states.unconfigured}</strong> {c.states.unconfiguredHelp}</p>
+            <p>
+              <a href={`${home}#${site[lang].ids.projects}`}>{site[lang].nav[0].label}</a>
+              <span aria-hidden="true"> · </span>
+              <a href={routeFor('background', lang)}>{site[lang].nav[1].label}</a>
+            </p>
+          </div>
+          <div class="unreachable" data-unreachable hidden>
+            <p>{c.states.unreachable}</p>
+            <button type="button" class="btn btn-outline small" data-recheck>{c.states.retry}</button>
+          </div>
+          <p class="sugg-label" id="chat-sugg-label">{c.suggestionsLabel}</p>
+          <ul class="suggestions" aria-labelledby="chat-sugg-label">
+            {
+              c.suggestions.map((s) => (
+                <li>
+                  <button type="button" class="suggestion" data-suggestion>
+                    {s}
+                  </button>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+
+      <form class="chat-form" data-form novalidate>
+        <label for="chat-input" class="visually-hidden">{c.inputLabel}</label>
+        <textarea
+          id="chat-input"
+          name="q"
+          rows="2"
+          maxlength={CHAT_MAX_CHARS}
+          placeholder={c.placeholder}
+          aria-describedby="chat-counter chat-disclaimer"
+          enterkeyhint="send"
+          autocomplete="off"></textarea>
+        <button type="submit" class="btn btn-primary chat-send" data-send>{c.send}</button>
+        <p class="chat-meta">
+          <span id="chat-counter" data-counter>{c.counter(0, CHAT_MAX_CHARS)}</span>
+          <span id="chat-disclaimer">{c.disclaimer}</span>
+        </p>
+      </form>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  import { chat, CHAT_MAX_CHARS } from '../content/chat';
+
+  type Msg = { role: 'user' | 'assistant'; content: string };
+  type Source = { title: string; url: string };
+
+  const root = document.querySelector<HTMLElement>('[data-chat]');
+  if (root) {
+    const lang = root.dataset.lang === 'en' ? 'en' : 'es';
+    const c = chat[lang];
+    const api = root.dataset.api ?? '';
+    const dlg = root.querySelector<HTMLDialogElement>('.chat-dialog')!;
+    const log = root.querySelector<HTMLElement>('[data-log]')!;
+    const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+    const input = form.querySelector<HTMLTextAreaElement>('textarea')!;
+    const send = form.querySelector<HTMLButtonElement>('[data-send]')!;
+    const counter = root.querySelector<HTMLElement>('[data-counter]')!;
+    const status = root.querySelector<HTMLElement>('[data-status]')!;
+    const unconfigured = root.querySelector<HTMLElement>('[data-unconfigured]')!;
+    const unreachable = root.querySelector<HTMLElement>('[data-unreachable]')!;
+    let history: Msg[] = [];
+    let opener: HTMLElement | null = null;
+    let state: 'unknown' | 'ready' | 'unconfigured' | 'unreachable' = 'unknown';
+    let busy = false;
+
+    const setState = (s: typeof state) => {
+      state = s;
+      root.dataset.state = s;
+      status.textContent =
+        s === 'ready' ? c.states.ready : s === 'unconfigured' ? c.states.unconfigured : s === 'unreachable' ? c.states.unreachable : c.states.checking;
+      unconfigured.hidden = s !== 'unconfigured';
+      unreachable.hidden = s !== 'unreachable';
+      const blocked = s === 'unconfigured';
+      input.disabled = blocked;
+      send.disabled = blocked || busy;
+      root.querySelectorAll<HTMLButtonElement>('[data-suggestion]').forEach((b) => (b.disabled = blocked));
+      // Si el campo queda desactivado con el foco dentro, el foco pasa al botón de cerrar.
+      if (blocked && dlg.open && (document.activeElement === input || document.activeElement === document.body)) {
+        root.querySelector<HTMLButtonElement>('[data-close]')!.focus();
+      }
+    };
+
+    const withTimeout = (ms: number) => {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), ms);
+      return { signal: ctrl.signal, done: () => clearTimeout(id) };
+    };
+
+    const checkHealth = async () => {
+      if (!api) {
+        setState('unconfigured');
+        return;
+      }
+      setState('unknown');
+      const t = withTimeout(6000);
+      try {
+        const res = await fetch(`${api}/api/health`, { signal: t.signal });
+        const body = await res.json();
+        setState(body.status === 'ok' ? 'ready' : 'unconfigured');
+      } catch {
+        setState('unreachable');
+      } finally {
+        t.done();
+      }
+    };
+
+    const bubble = (role: 'user' | 'assistant', text = '') => {
+      const el = document.createElement('div');
+      el.className = `msg msg-${role}`;
+      const who = document.createElement('p');
+      who.className = 'msg-who';
+      who.textContent = role === 'user' ? c.you : c.assistant;
+      const body = document.createElement('div');
+      body.className = 'msg-body';
+      if (text) body.textContent = text;
+      el.append(who, body);
+      log.append(el);
+      log.scrollTop = log.scrollHeight;
+      return body;
+    };
+
+    const renderAnswer = (body: HTMLElement, answer: string, sources: Source[]) => {
+      body.textContent = '';
+      answer
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .forEach((p) => {
+          const para = document.createElement('p');
+          para.textContent = p;
+          body.append(para);
+        });
+      if (sources.length) {
+        const h = document.createElement('p');
+        h.className = 'msg-sources-label';
+        h.textContent = c.sources;
+        const ul = document.createElement('ul');
+        ul.className = 'msg-sources';
+        sources.forEach((s) => {
+          // Solo enlaces relativos de la propia web o https.
+          if (!/^(\/|https:\/\/)/.test(s.url)) return;
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = s.url;
+          a.textContent = s.title;
+          li.append(a);
+          ul.append(li);
+        });
+        body.append(h, ul);
+      }
+    };
+
+    const showError = (body: HTMLElement, message: string, retry?: () => void) => {
+      body.textContent = '';
+      const p = document.createElement('p');
+      p.className = 'msg-error';
+      p.textContent = message;
+      body.append(p);
+      if (retry) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-outline small';
+        b.textContent = c.states.retry;
+        b.addEventListener('click', () => {
+          b.remove();
+          retry();
+        });
+        body.append(b);
+      }
+    };
+
+    const ask = async (question: string) => {
+      if (busy) return;
+      const q = question.trim();
+      if (!q) return;
+      if (q.length > CHAT_MAX_CHARS) {
+        bubble('assistant', c.states.tooLong);
+        return;
+      }
+      bubble('user', q);
+      const body = bubble('assistant');
+      const run = async () => {
+        history.push({ role: 'user', content: q });
+        busy = true;
+        send.disabled = true;
+        body.parentElement!.setAttribute('aria-busy', 'true');
+        body.innerHTML = `<p class="msg-loading"><span class="dots" aria-hidden="true"></span>${c.states.loading}</p>`;
+        const t = withTimeout(60000);
+        try {
+          const res = await fetch(`${api}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lang, messages: history.slice(-8) }),
+            signal: t.signal,
+          });
+          if (res.status === 429) {
+            history.pop();
+            showError(body, c.states.rateLimited);
+            return;
+          }
+          if (res.status === 503) {
+            history.pop();
+            setState('unconfigured');
+            showError(body, c.states.unconfigured);
+            return;
+          }
+          if (!res.ok) throw new Error(String(res.status));
+          const data = (await res.json()) as { answer: string; sources: Source[] };
+          renderAnswer(body, data.answer, data.sources ?? []);
+          history.push({ role: 'assistant', content: data.answer });
+        } catch {
+          // La pregunta sin respuesta sale del historial; «Reintentar» la vuelve a enviar.
+          history.pop();
+          showError(body, c.states.error, run);
+        } finally {
+          t.done();
+          busy = false;
+          send.disabled = state === 'unconfigured';
+          body.parentElement!.removeAttribute('aria-busy');
+          log.scrollTop = log.scrollHeight;
+        }
+      };
+      await run();
+    };
+
+    const updateCounter = () => {
+      counter.textContent = c.counter(input.value.length, CHAT_MAX_CHARS);
+    };
+
+    const open = (from: HTMLElement) => {
+      opener = from;
+      dlg.showModal();
+      if (state !== 'ready' && state !== 'unconfigured') checkHealth();
+      input.focus();
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-open-chat]').forEach((b) =>
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        open(b);
+      }),
+    );
+    root.querySelector('[data-close]')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+    dlg.addEventListener('close', () => {
+      opener?.focus();
+      opener = null;
+    });
+    root.querySelector('[data-recheck]')!.addEventListener('click', checkHealth);
+    root.querySelector('[data-reset]')!.addEventListener('click', () => {
+      history = [];
+      log.querySelectorAll('.msg').forEach((m) => m.remove());
+      input.value = '';
+      updateCounter();
+      input.focus();
+    });
+    root.querySelectorAll<HTMLButtonElement>('[data-suggestion]').forEach((b) =>
+      b.addEventListener('click', () => ask(b.textContent ?? '')),
+    );
+    input.addEventListener('input', updateCounter);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = input.value;
+      if (!q.trim() || busy) return;
+      input.value = '';
+      updateCounter();
+      ask(q);
+    });
+  }
+</script>
+
+<style>
+  .chat-launcher {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.5rem 1.1rem 0.5rem 0.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--navy);
+    background: var(--accent);
+    border: 2px solid var(--navy);
+    border-radius: 999px;
+    box-shadow: 0 8px 22px rgb(11 31 42 / 0.3);
+    cursor: pointer;
+  }
+
+  .chat-launcher:hover {
+    background: #d99a4f;
+  }
+
+  .launcher-icon {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--accent);
+    font-family: var(--font-serif);
+  }
+
+  .chat-dialog {
+    width: min(100% - 1.5rem, 34rem);
+    height: min(100dvh - 2rem, 44rem);
+    max-height: none;
+    margin: auto 1rem 1rem auto;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+    overflow: hidden;
+  }
+
+  .chat-dialog::backdrop {
+    background: rgb(11 31 42 / 0.45);
+  }
+
+  .chat-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.85rem 0.75rem 1.1rem;
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .chat-head h2 {
+    font-size: 1.15rem;
+    margin: 0 0 0.15rem;
+  }
+
+  .chat-status {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--on-navy-muted);
+  }
+
+  .head-actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .chat-reset,
+  .chat-close {
+    min-height: 2.75rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--on-navy);
+    background: transparent;
+    border: 1px solid var(--on-navy-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .chat-reset {
+    padding: 0 0.7rem;
+  }
+
+  .chat-close {
+    width: 2.75rem;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .chat-reset:hover,
+  .chat-close:hover {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .chat-welcome p {
+    margin: 0 0 0.75rem;
+  }
+
+  .unconfigured,
+  .unreachable {
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.9rem;
+    border-left: 4px solid var(--accent);
+    background: var(--paper-2);
+    border-radius: var(--radius);
+  }
+
+  .unconfigured p:last-child,
+  .unreachable p {
+    margin-bottom: 0.4rem;
+  }
+
+  .sugg-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .suggestions {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .suggestion {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    font-size: 0.93rem;
+    text-align: left;
+    color: var(--sea);
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .suggestion:hover:not(:disabled) {
+    border-color: var(--sea);
+  }
+
+  .suggestion:disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .chat-log :global(.msg) {
+    max-width: 92%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 10px;
+  }
+
+  .chat-log :global(.msg-user) {
+    align-self: flex-end;
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .chat-log :global(.msg-assistant) {
+    align-self: flex-start;
+    background: var(--card);
+    border: 1px solid var(--rule);
+  }
+
+  .chat-log :global(.msg-who) {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .chat-log :global(.msg-body p) {
+    margin: 0 0 0.5rem;
+    white-space: pre-line;
+  }
+
+  .chat-log :global(.msg-body p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .chat-log :global(.msg-sources-label) {
+    margin-top: 0.6rem !important;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .chat-log :global(.msg-sources) {
+    margin: 0.2rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  .chat-log :global(.msg-error) {
+    color: #9b2c1f;
+  }
+
+  .chat-log :global(.msg-loading) {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .chat-log :global(.dots) {
+    display: inline-block;
+    width: 1.2rem;
+  }
+
+  .chat-log :global(.dots)::after {
+    content: '…';
+  }
+
+  :global(.btn.small) {
+    min-height: 2.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .chat-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    padding: 0.75rem 0.9rem max(0.75rem, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--rule);
+    background: var(--card);
+  }
+
+  .chat-form textarea {
+    width: 100%;
+    min-height: 2.9rem;
+    max-height: 8rem;
+    resize: vertical;
+    padding: 0.55rem 0.7rem;
+    /* 16 px o más: evita que el navegador del móvil amplíe la página al escribir. */
+    font: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .chat-form textarea:disabled {
+    background: var(--paper-2);
+  }
+
+  .chat-send {
+    align-self: end;
+  }
+
+  .chat-send:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .chat-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 40rem) {
+    /* En móvil el chat ocupa toda la pantalla; con el teclado abierto se reduce su alto. */
+    .chat-dialog {
+      width: 100%;
+      max-width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    .chat-launcher {
+      padding-right: 0.95rem;
+    }
+  }
+
+  @media print {
+    .chat-root {
+      display: none;
+    }
+  }
+</style>

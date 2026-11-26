@@ -1,0 +1,12 @@
+---
+import Base from '../../../layouts/Base.astro';
+import CasePage from '../../../components/CasePage.astro';
+import { cases } from '../../../content/cases';
+
+const lang = 'en';
+const c = cases.platform[lang];
+---
+
+<Base lang={lang} route="platform" title={c.meta.title} description={c.meta.description}>
+  <CasePage lang={lang} c={c} />
+</Base>

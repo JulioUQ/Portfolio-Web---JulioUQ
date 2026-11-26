@@ -1,0 +1,329 @@
+---
+/**
+ * Diagrama propio: asignación de las series observadas (y) a poblaciones subyacentes (x)
+ * mediante la matriz Z, con la hipótesis 3 de Úbeda et al. (2023) como ejemplo.
+ * Se construye con HTML para que el texto sea real y se adapte al ancho de pantalla.
+ */
+import type { MarssDiagramContent } from '../content/cases/types';
+
+interface Props {
+  d: MarssDiagramContent;
+}
+
+const { d } = Astro.props;
+// Hipótesis 3: NWAS → x1, EG → x2, ICE y NEAS → x3.
+const assignment = [0, 1, 2, 2];
+const z = d.series.map((_, row) => d.populations.map((_, col) => (assignment[row] === col ? 1 : 0)));
+---
+
+<figure class="diagram" aria-labelledby="marss-diagram-title">
+  <figcaption class="head">
+    <p id="marss-diagram-title" class="title">{d.title}</p>
+    <p class="intro">{d.intro}</p>
+  </figcaption>
+
+  <div class="map" role="group" aria-label={d.title}>
+    <p class="col-head series-head">{d.seriesHeading} <span class="sym">y</span></p>
+    <p class="col-head z-head" aria-hidden="true">Z</p>
+    <p class="col-head pop-head">{d.populationsHeading} <span class="sym">x</span></p>
+
+    {
+      d.series.map((s, i) => (
+        <div class="series" style={`grid-row:${i + 2}`}>
+          <span class="code mono">{s.code}</span>
+          <span class="sname">{s.name}</span>
+          <span class="stock mono">{s.stock}</span>
+        </div>
+      ))
+    }
+
+    <div class="link" style="grid-row:2" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+      <line x1="0" y1="50" x2="100" y2="50" vector-effect="non-scaling-stroke"></line>
+    </svg>
+    </div>
+    <div class="link" style="grid-row:3" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+      <line x1="0" y1="50" x2="100" y2="50" vector-effect="non-scaling-stroke"></line>
+    </svg>
+    </div>
+    <div class="link joined" style="grid-row:4 / span 2" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+      <line x1="0" y1="25" x2="100" y2="50" vector-effect="non-scaling-stroke"></line>
+      <line x1="0" y1="75" x2="100" y2="50" vector-effect="non-scaling-stroke"></line>
+    </svg>
+    </div>
+
+    <div class="pop" style="grid-row:2">
+      <span class="mono">x₁</span>
+      {d.populations[0]}
+      <span class="members mono">NWAS</span>
+    </div>
+    <div class="pop" style="grid-row:3">
+      <span class="mono">x₂</span>
+      {d.populations[1]}
+      <span class="members mono">EG</span>
+    </div>
+    <div class="pop pop-joined" style="grid-row:4 / span 2">
+      <span class="mono">x₃</span>
+      {d.populations[2]}
+      <span class="members mono">ICE + NEAS</span>
+    </div>
+  </div>
+
+  <div class="matrix-wrap">
+    <table class="matrix">
+      <caption>{d.matrixCaption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{d.matrixCorner}</th>
+          <th scope="col">x₁</th>
+          <th scope="col">x₂</th>
+          <th scope="col">x₃</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          d.series.map((s, row) => (
+            <tr>
+              <th scope="row" class="mono">{s.code}</th>
+              {z[row].map((v) => <td class={v ? 'one' : 'zero'}>{v}</td>)}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+    <p class="note">{d.note}</p>
+  </div>
+
+  <p class="source">{d.source}</p>
+</figure>
+
+<style>
+  .diagram {
+    margin: 2rem 0;
+    padding: clamp(1rem, 0.5rem + 2vw, 1.75rem);
+    background: var(--navy);
+    color: var(--on-navy);
+    border-radius: var(--radius);
+  }
+
+  .head .title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+
+  .head .intro {
+    margin: 0 0 1.25rem;
+    color: var(--on-navy-muted);
+    font-size: 0.95rem;
+  }
+
+  .map {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(2.5rem, 0.6fr) minmax(0, 1fr);
+    grid-auto-rows: minmax(3.6rem, auto);
+    column-gap: 0;
+    row-gap: 0.6rem;
+    align-items: stretch;
+  }
+
+  .col-head {
+    grid-row: 1;
+    margin: 0;
+    align-self: end;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--on-navy-muted);
+  }
+
+  .series-head {
+    grid-column: 1;
+  }
+
+  .z-head {
+    grid-column: 2;
+    text-align: center;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  .pop-head {
+    grid-column: 3;
+  }
+
+  .sym {
+    color: var(--accent);
+    text-transform: none;
+  }
+
+  .series {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.6rem;
+    align-content: center;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--navy-line);
+    border-left: 4px solid var(--sea-soft);
+    border-radius: var(--radius);
+    background: var(--navy-2);
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .series .code {
+    grid-row: span 2;
+    align-self: center;
+    color: var(--sea-soft);
+    font-weight: 700;
+  }
+
+  .series .stock {
+    color: var(--on-navy-muted);
+    font-size: 0.72rem;
+  }
+
+  .link {
+    grid-column: 2;
+    position: relative;
+  }
+
+  /* El SVG no aporta tamaño a la fila: ocupa el hueco que dejan las cajas. */
+  .link svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .link line {
+    stroke: var(--on-navy-muted);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+  }
+
+  .link.joined line {
+    stroke: var(--accent);
+    stroke-dasharray: none;
+    stroke-width: 2;
+  }
+
+  .pop {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid var(--sea-soft);
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.3;
+  }
+
+  .pop .mono {
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .members {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--on-navy-muted);
+  }
+
+  .pop-joined {
+    border-color: var(--accent);
+    background: rgb(200 135 58 / 0.12);
+  }
+
+  .matrix-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--navy-line);
+  }
+
+  .matrix {
+    width: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: transparent;
+  }
+
+  .matrix caption {
+    caption-side: top;
+    border: 0;
+    padding: 0 0 0.5rem;
+    color: var(--on-navy-muted);
+    font-family: var(--font-sans);
+    max-width: 22rem;
+  }
+
+  .matrix th,
+  .matrix td {
+    padding: 0.25rem 0.75rem;
+    border-bottom: 1px solid var(--navy-line);
+    text-align: center;
+    background: transparent;
+    color: var(--on-navy);
+  }
+
+  .matrix th[scope='row'] {
+    text-align: left;
+    color: var(--sea-soft);
+  }
+
+  .matrix .zero {
+    color: var(--on-navy-muted);
+    opacity: 0.6;
+  }
+
+  .matrix .one {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .note {
+    flex: 1 1 14rem;
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--on-navy);
+  }
+
+  .source {
+    margin: 1rem 0 0;
+    font-size: 0.82rem;
+    color: var(--on-navy-muted);
+  }
+
+  @media (max-width: 30rem) {
+    .map {
+      grid-template-columns: minmax(0, 1.3fr) 1.75rem minmax(0, 1fr);
+    }
+
+    .series {
+      grid-template-columns: 1fr;
+      padding: 0.45rem 0.55rem;
+      font-size: 0.82rem;
+    }
+
+    .series .code {
+      grid-row: auto;
+    }
+
+    .pop {
+      padding: 0.45rem 0.55rem;
+      font-size: 0.85rem;
+    }
+  }
+</style>

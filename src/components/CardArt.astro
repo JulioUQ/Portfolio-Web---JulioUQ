@@ -1,0 +1,245 @@
+---
+/** Miniaturas esquemáticas de las tarjetas (decorativas). */
+interface Props {
+  kind: 'halibut' | 'map' | 'fleet' | 'scraping' | 'course' | 'platform';
+}
+
+const { kind } = Astro.props;
+---
+
+<svg class="card-art" viewBox="0 0 320 150" aria-hidden="true" focusable="false">
+  <rect width="320" height="150" class="bg"></rect>
+  {[0, 1, 2, 3].map((i) => <path class="contour" d={`M -10 ${40 + i * 28} C 70 ${20 + i * 28}, 140 ${80 + i * 28}, 330 ${30 + i * 28}`} />)}
+  {
+    kind === 'halibut' && (
+      <g>
+        <g class="series">
+          <circle cx="58" cy="44" r="7" />
+          <circle cx="58" cy="74" r="7" />
+          <circle cx="58" cy="104" r="7" />
+          <circle cx="58" cy="134" r="7" />
+        </g>
+        <g class="links">
+          <line x1="66" y1="44" x2="232" y2="44" />
+          <line x1="66" y1="74" x2="232" y2="74" />
+          <line x1="66" y1="104" x2="232" y2="119" />
+          <line x1="66" y1="134" x2="232" y2="119" />
+        </g>
+        <g class="pops">
+          <rect x="232" y="34" width="44" height="20" rx="4" />
+          <rect x="232" y="64" width="44" height="20" rx="4" />
+          <rect x="232" y="104" width="44" height="30" rx="4" class="joined" />
+        </g>
+        <text x="58" y="22" class="label">y</text>
+        <text x="254" y="22" class="label">x</text>
+      </g>
+    )
+  }
+  {
+    kind === 'map' && (
+      <g>
+        <rect x="70" y="26" width="150" height="96" rx="4" class="layer l3" />
+        <rect x="86" y="18" width="150" height="96" rx="4" class="layer l2" />
+        <rect x="102" y="10" width="150" height="96" rx="4" class="layer l1" />
+        <path class="poly" d="M120 30 L170 24 L196 50 L176 82 L132 76 Z" />
+        <g class="pins">
+          <circle cx="214" cy="40" r="5" />
+          <circle cx="226" cy="70" r="5" />
+          <circle cx="150" cy="92" r="5" />
+          <circle cx="206" cy="88" r="5" />
+        </g>
+        <text x="102" y="136" class="label">.html</text>
+      </g>
+    )
+  }
+  {
+    kind === 'fleet' && (
+      <g>
+        <line x1="40" y1="128" x2="290" y2="128" class="axis" />
+        {[62, 48, 70, 86, 78, 64, 52, 44, 38, 34].map((h, i) => (
+          <rect x={52 + i * 23} y={128 - h} width="14" height={h} class={i > 6 ? 'bar bar-late' : 'bar'} />
+        ))}
+        <text x="40" y="144" class="label">1987</text>
+        <text x="258" y="144" class="label">2025</text>
+      </g>
+    )
+  }
+  {
+    kind === 'scraping' && (
+      <g>
+        <rect x="34" y="28" width="74" height="88" rx="4" class="page" />
+        {[44, 56, 68, 80, 92, 104].map((y) => <line x1="44" x2="98" y1={y} y2={y} class="row" />)}
+        <path d="M118 72 H150" class="arrow" />
+        <path d="M144 66 L152 72 L144 78" class="arrow" />
+        <rect x="160" y="40" width="44" height="64" rx="4" class="page" />
+        {[52, 64, 76, 88].map((y) => <line x1="168" x2="196" y1={y} y2={y} class="row hot" />)}
+        <path d="M212 72 H244" class="arrow" />
+        <path d="M238 66 L246 72 L238 78" class="arrow" />
+        <rect x="254" y="46" width="40" height="52" rx="3" class="csv" />
+        <text x="262" y="77" class="label">csv</text>
+        <text x="34" y="136" class="label">EU → ESP</text>
+      </g>
+    )
+  }
+  {
+    kind === 'course' && (
+      <g>
+        <line x1="40" y1="128" x2="290" y2="128" class="axis" />
+        {[6, 13, 38, 76, 120, 96, 60, 30, 12, 5].map((h, i) => (
+          <rect x={60 + i * 21} y={128 - h * 0.85} width="16" height={h * 0.85} class="bar" />
+        ))}
+        <path d="M58 127 C 110 125, 125 22, 168 22 S 230 125, 282 127" class="curve" />
+        <line x1="166" y1="128" x2="166" y2="18" class="mean" />
+      </g>
+    )
+  }
+  {
+    kind === 'platform' && (
+      <g>
+        {['xlsx', 'n8n', 'SQL', 'py', 'Dash'].map((t, i) => (
+          <g>
+            <rect x={22 + i * 58} y="52" width="44" height="40" rx="5" class={i === 2 ? 'node db' : 'node'} />
+            <text x={44 + i * 58} y="77" class="label" text-anchor="middle">{t}</text>
+            {i < 4 && <path d={`M${68 + i * 58} 72 H${78 + i * 58}`} class="arrow" />}
+          </g>
+        ))}
+        <path d="M218 96 V120 H250" class="arrow dashed" />
+        <text x="256" y="124" class="label">web</text>
+      </g>
+    )
+  }
+</svg>
+
+<style>
+  .card-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    /* Franja más baja que el dibujo: se centra y los lados quedan en el mismo azul. */
+    aspect-ratio: 32 / 9;
+    background: var(--navy);
+  }
+
+  .bg {
+    fill: var(--navy);
+  }
+
+  .contour {
+    fill: none;
+    stroke: var(--navy-line);
+    stroke-width: 1.2;
+  }
+
+  .series circle {
+    fill: var(--sea-soft);
+  }
+
+  .links line {
+    stroke: var(--on-navy-muted);
+    stroke-width: 1.4;
+    stroke-dasharray: 4 4;
+  }
+
+  .pops rect {
+    fill: var(--navy-2);
+    stroke: var(--sea-soft);
+    stroke-width: 1.5;
+  }
+
+  .pops .joined {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    fill: var(--on-navy-muted);
+  }
+
+  .layer {
+    fill: var(--navy-2);
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.6;
+  }
+
+  .l1 {
+    fill: #183b4b;
+  }
+
+  .poly {
+    fill: var(--sea-soft);
+    fill-opacity: 0.35;
+    stroke: var(--sea-soft);
+  }
+
+  .pins circle {
+    fill: var(--accent);
+  }
+
+  .axis {
+    stroke: var(--on-navy-muted);
+  }
+
+  .page {
+    fill: var(--navy-2);
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.7;
+  }
+
+  .row {
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.5;
+    stroke-width: 2;
+  }
+
+  .row.hot {
+    stroke: var(--sea-soft);
+    stroke-opacity: 1;
+  }
+
+  .arrow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+
+  .arrow.dashed {
+    stroke-dasharray: 4 3;
+  }
+
+  .csv {
+    fill: var(--accent);
+    fill-opacity: 0.2;
+    stroke: var(--accent);
+  }
+
+  .curve {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+
+  .mean {
+    stroke: var(--on-navy-muted);
+    stroke-dasharray: 3 4;
+  }
+
+  .node {
+    fill: var(--navy-2);
+    stroke: var(--sea-soft);
+    stroke-width: 1.5;
+  }
+
+  .node.db {
+    stroke: var(--accent);
+  }
+
+  .bar {
+    fill: var(--sea-soft);
+  }
+
+  .bar-late {
+    fill: var(--accent);
+  }
+</style>

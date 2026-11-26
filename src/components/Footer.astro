@@ -1,0 +1,29 @@
+---
+import type { Lang } from '../i18n/routes';
+import { site } from '../content/site';
+
+interface Props {
+  lang: Lang;
+}
+
+const t = site[Astro.props.lang];
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© Julio Úbeda Quesada · {t.ui.footer}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--navy);
+    color: var(--on-navy-muted);
+    font-size: 0.9rem;
+    padding-block: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+  }
+</style>

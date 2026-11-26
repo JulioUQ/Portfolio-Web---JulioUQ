@@ -1,0 +1,18 @@
+---
+import { routeFor } from '../i18n/routes';
+const target = routeFor('home', 'es');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    {import.meta.env.PUBLIC_PORTFOLIO_PUBLISHED !== 'true' && <meta name="robots" content="noindex" />}
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={new URL(target, Astro.site)} />
+    <title>Julio Úbeda Quesada</title>
+  </head>
+  <body>
+    <p><a href={target}>Español</a> · <a href={routeFor('home', 'en')}>English</a></p>
+  </body>
+</html>

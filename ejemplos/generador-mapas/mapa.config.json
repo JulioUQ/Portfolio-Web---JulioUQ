@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "title": "Capturas de ejemplo",
+  "subtitle": "Datos ficticios · generado con el generador de mapas interactivos",
+  "output": "salida/mapa-ejemplo.html",
+  "open_browser": false,
+  "positions": [
+    {
+      "path": "datos/capturas_ficticias.csv",
+      "name": "Capturas",
+      "lat": "Latitud",
+      "lon": "Longitud",
+      "date": "Fecha",
+      "style": { "mode": "category", "column": "Especie" },
+      "radius": 4,
+      "tooltip": ["Barco", "Especie", "Captura_kg"],
+      "popup": ["Fecha", "Barco", "Puerto", "Especie", "Arte", "Captura_kg"],
+      "slicers": ["Barco", "Puerto"],
+      "date_slicer": true
+    }
+  ],
+  "layers": [
+    {
+      "path": "datos/zonas_ficticias.geojson",
+      "name": "Zonas",
+      "show": true,
+      "style": { "mode": "category", "column": "tipo", "colors": { "Veda temporal": "#f08a00", "Reserva marina": "#2a9d4f" } },
+      "weight": 1.8,
+      "dashed": true,
+      "fill_opacity": 0.25,
+      "tooltip": ["nombre"],
+      "popup": ["nombre", "tipo", "sup_km2"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import BackgroundPage from '../../components/BackgroundPage.astro';
+import { backgroundPage } from '../../content/background';
+
+const lang = 'es';
+const b = backgroundPage[lang];
+---
+
+<Base lang={lang} route="background" title={b.meta.title} description={b.meta.description}>
+  <BackgroundPage lang={lang} />
+</Base>

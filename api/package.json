@@ -1,0 +1,23 @@
+{
+  "name": "portfolio-chat-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "API del chat del portfolio: recupera contenido publicado y llama a un modelo configurado por variables de entorno.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.ts",
+    "check": "tsc --noEmit -p .",
+    "test": "node --test src/*.test.ts",
+    "validate": "node src/validate.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.10",
+    "typescript": "^7.0.2"
+  }
+}

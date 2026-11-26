@@ -1,0 +1,195 @@
+---
+import { otherLang, routeFor, type Lang, type RouteKey } from '../i18n/routes';
+import { site } from '../content/site';
+import { hrefFor } from '../i18n/targets';
+
+interface Props {
+  lang: Lang;
+  route: RouteKey;
+}
+
+const { lang, route } = Astro.props;
+const t = site[lang];
+const target = otherLang(lang);
+const home = routeFor('home', lang);
+const navItems = t.nav.map((item) => ({
+  ...item,
+  href: hrefFor(item.target, lang),
+  // El enlace «Pregúntame» abre el chat cuando hay JS; sin JS lleva a la sección de la portada.
+  chat: item.target.kind === 'internal' && item.target.hash === t.ids.ask,
+}));
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href={home}>Julio Úbeda Quesada</a>
+
+    <nav class="nav-desktop" aria-label={lang === 'es' ? 'Secciones' : 'Sections'}>
+      <ul>
+        {navItems.map((item) => <li><a href={item.href} data-open-chat={item.chat ? '' : undefined}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="tools">
+      <a
+        class="lang"
+        href={routeFor(route, target)}
+        hreflang={target}
+        lang={target}
+        aria-label={t.ui.langSwitchLabel}
+      >
+        {t.ui.langSwitch}
+      </a>
+
+      <details class="nav-mobile">
+        <summary>{t.ui.menu}</summary>
+        <nav aria-label={lang === 'es' ? 'Secciones' : 'Sections'}>
+          <ul>
+            {navItems.map((item) => <li><a href={item.href} data-open-chat={item.chat ? '' : undefined}>{item.label}</a></li>)}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    background: var(--navy);
+    color: var(--on-navy);
+    border-bottom: 1px solid var(--navy-line);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 4rem;
+  }
+
+  .brand {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--on-navy);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-desktop {
+    margin-left: auto;
+  }
+
+  .nav-desktop ul {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .nav-desktop a,
+  .nav-mobile a {
+    color: var(--on-navy-muted);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .nav-desktop a:hover,
+  .nav-mobile a:hover {
+    color: var(--on-navy);
+    text-decoration: underline;
+  }
+
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .lang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.5rem;
+    padding: 0 0.6rem;
+    border: 1px solid var(--on-navy-muted);
+    border-radius: var(--radius);
+    color: var(--on-navy);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .lang:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .nav-mobile {
+    display: none;
+    position: relative;
+  }
+
+  .nav-mobile summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0 0.8rem;
+    border: 1px solid var(--on-navy-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.9rem;
+  }
+
+  .nav-mobile summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-mobile summary::after {
+    content: '▾';
+    margin-left: 0.4rem;
+    font-size: 0.8em;
+  }
+
+  .nav-mobile[open] summary::after {
+    content: '▴';
+  }
+
+  .nav-mobile nav {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 20;
+    min-width: 12rem;
+    padding: 0.5rem;
+    background: var(--navy-2);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.3);
+  }
+
+  .nav-mobile li a {
+    display: block;
+    padding: 0.6rem 0.75rem;
+  }
+
+  @media (max-width: 52rem) {
+    .nav-desktop {
+      display: none;
+    }
+
+    .tools {
+      margin-left: auto;
+    }
+
+    .nav-mobile {
+      display: block;
+    }
+  }
+</style>

@@ -1,0 +1,166 @@
+---
+/**
+ * Ilustración cartográfica esquemática (no representa ninguna zona real).
+ * Retícula, isobatas, sondas, rosa de los vientos y un transecto con tres estaciones.
+ */
+const isobaths = [0, 1, 2, 3, 4, 5].map((i) => {
+  const o = i * 26;
+  return `M -20 ${120 + o} C 80 ${70 + o}, 150 ${190 + o}, 250 ${140 + o} S 420 ${60 + o}, 520 ${110 + o}`;
+});
+const soundings = [
+  { x: 70, y: 96, v: '120' },
+  { x: 196, y: 210, v: '480' },
+  { x: 318, y: 150, v: '760' },
+  { x: 120, y: 300, v: '1150' },
+  { x: 380, y: 300, v: '1400' },
+  { x: 260, y: 352, v: '1500' },
+];
+const stations = [
+  { x: 96, y: 168 },
+  { x: 236, y: 236 },
+  { x: 372, y: 196 },
+];
+---
+
+<svg class="chart" viewBox="0 0 480 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <defs>
+    <clipPath id="chart-frame">
+      <rect x="8" y="8" width="464" height="384" rx="4"></rect>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#chart-frame)">
+    <g class="grid">
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => <line x1={8 + i * 77} y1="0" x2={8 + i * 77 - 30} y2="400" />)}
+      {[0, 1, 2, 3, 4, 5].map((i) => <line x1="0" y1={20 + i * 76} x2="480" y2={10 + i * 76} />)}
+    </g>
+
+    <path class="land" d="M -10 -10 L 210 -10 C 190 30, 150 40, 120 52 C 80 66, 40 58, -10 70 Z"></path>
+
+    <g class="isobaths">
+      {isobaths.map((d, i) => <path d={d} style={`opacity:${0.85 - i * 0.11}`} />)}
+    </g>
+
+    <g class="soundings">
+      {soundings.map((s) => <text x={s.x} y={s.y}>{s.v}</text>)}
+    </g>
+
+    <polyline class="transect" points={stations.map((s) => `${s.x},${s.y}`).join(' ')}></polyline>
+    <g class="stations">
+      {stations.map((s) => (
+        <g>
+          <circle cx={s.x} cy={s.y} r="9" class="halo" />
+          <circle cx={s.x} cy={s.y} r="4.5" />
+        </g>
+      ))}
+    </g>
+  </g>
+
+  <g class="compass" transform="translate(410 70)">
+    <circle r="34"></circle>
+    <circle r="24" class="inner"></circle>
+    <path d="M0 -40 L6 0 L0 40 L-6 0 Z"></path>
+    <path d="M-40 0 L0 6 L40 0 L0 -6 Z" class="minor"></path>
+    <text y="-46">N</text>
+  </g>
+
+  <g class="scale" transform="translate(28 372)">
+    <rect width="40" height="5"></rect>
+    <rect x="40" width="40" height="5" class="alt"></rect>
+    <rect x="80" width="40" height="5"></rect>
+  </g>
+
+  <rect class="frame" x="8" y="8" width="464" height="384" rx="4"></rect>
+</svg>
+
+<style>
+  .chart {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .grid line {
+    stroke: var(--navy-line);
+    stroke-width: 1;
+    stroke-dasharray: 2 6;
+  }
+
+  .land {
+    fill: #1c3a48;
+    stroke: var(--sea-soft);
+    stroke-width: 1;
+    stroke-opacity: 0.6;
+  }
+
+  .isobaths path {
+    fill: none;
+    stroke: var(--sea-soft);
+    stroke-width: 1.2;
+  }
+
+  .soundings text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--on-navy-muted);
+    opacity: 0.8;
+  }
+
+  .transect {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-dasharray: 6 5;
+  }
+
+  .stations circle {
+    fill: var(--accent);
+  }
+
+  .stations .halo {
+    fill: none;
+    stroke: var(--accent);
+    stroke-opacity: 0.5;
+  }
+
+  .compass circle {
+    fill: none;
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.6;
+  }
+
+  .compass .inner {
+    stroke-dasharray: 2 3;
+  }
+
+  .compass path {
+    fill: var(--on-navy);
+    opacity: 0.85;
+  }
+
+  .compass .minor {
+    opacity: 0.45;
+  }
+
+  .compass text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    fill: var(--on-navy);
+    text-anchor: middle;
+  }
+
+  .scale rect {
+    fill: var(--on-navy);
+  }
+
+  .scale .alt {
+    fill: none;
+    stroke: var(--on-navy);
+  }
+
+  .frame {
+    fill: none;
+    stroke: var(--on-navy-muted);
+    stroke-opacity: 0.5;
+  }
+</style>

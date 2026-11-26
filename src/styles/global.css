@@ -1,0 +1,322 @@
+/* Carta náutica: cabecera azul profundo, papel claro de lectura y acento cálido. */
+:root {
+  --navy: #0b1f2a;
+  --navy-2: #12303f;
+  --navy-line: #2a4c5e;
+  --paper: #f5f1e8;
+  --paper-2: #ebe4d4;
+  --card: #fbf9f4;
+  --ink: #1b2a33;
+  --muted: #4b5b64;
+  --rule: #d6ccb7;
+  --sea: #1f6b60;
+  --sea-soft: #5fb3a1;
+  --accent: #c8873a;
+  --accent-ink: #8a4f12;
+  --on-navy: #e9eef0;
+  --on-navy-muted: #b5c4cb;
+  --focus: #e0a052;
+
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  --wrap: 72rem;
+  --measure: 40rem;
+  --radius: 6px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  line-height: 1.2;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.1rem);
+  margin: 0 0 0.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+
+a {
+  color: var(--sea);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.wrap {
+  width: min(100% - 2.5rem, var(--wrap));
+  margin-inline: auto;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--accent);
+  color: var(--navy);
+  font-weight: 600;
+  border-radius: var(--radius);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin: 0 0 0.5rem;
+}
+
+.section {
+  padding-block: clamp(3rem, 2rem + 4vw, 5rem);
+  border-top: 1px solid var(--rule);
+}
+
+.section-intro {
+  max-width: var(--measure);
+  color: var(--muted);
+  margin: 0 0 2rem;
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.9rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--navy);
+}
+
+.btn-primary:hover {
+  background: #d99a4f;
+}
+
+.btn-ghost {
+  border-color: var(--on-navy-muted);
+  color: var(--on-navy);
+}
+
+.btn-ghost:hover {
+  border-color: var(--on-navy);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.btn-outline {
+  border-color: var(--sea);
+  color: var(--sea);
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background: rgb(31 107 96 / 0.08);
+}
+
+/* Etiquetas de herramientas (catálogo y ventanas) */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tags li {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--paper);
+}
+
+/* Grupo de botones de filtro (proyectos y cronología) */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filter-btn {
+  min-height: 2.75rem;
+  padding: 0.35rem 0.95rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--sea);
+  background: var(--card);
+  border: 1.5px solid var(--sea);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.filter-btn:hover {
+  background: rgb(31 107 96 / 0.08);
+}
+
+.filter-btn[aria-pressed='true'] {
+  background: var(--sea);
+  color: #fff;
+}
+
+.filter-btn[aria-pressed='true']::before {
+  content: '✓ ';
+}
+
+/* Tablas */
+.table-scroll {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+caption {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  caption-side: bottom;
+  border-top: 1px solid var(--rule);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--paper-2);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--paper-2);
+}
+
+/* Tablas en móvil: cada fila se lee como una tarjeta. */
+@media (max-width: 40rem) {
+  .table-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table-stack tr {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .table-stack td {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.5rem;
+    padding: 0.15rem 0;
+    border: 0;
+  }
+
+  .table-stack td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+}

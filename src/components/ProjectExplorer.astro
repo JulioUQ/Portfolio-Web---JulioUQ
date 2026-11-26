@@ -1,0 +1,485 @@
+---
+/**
+ * Explorador de proyectos: filtros por área, tarjetas y una ventana flotante por proyecto.
+ * Todo sale del catálogo (src/content/projects.ts).
+ * Sin JS, cada tarjeta es un enlace normal al caso completo; con JS, un clic sin teclas
+ * modificadoras abre la ventana (Ctrl/Cmd+clic sigue abriendo el caso en otra pestaña).
+ */
+import { Image } from 'astro:assets';
+import CardArt from './CardArt.astro';
+import { projects, areaIds, areaLabels } from '../content/projects';
+import { explorer } from '../content/explorer';
+import { site } from '../content/site';
+import { routeFor, type Lang } from '../i18n/routes';
+import { cases } from '../content/cases';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = explorer[lang];
+const ui = site[lang].ui;
+const areas = areaLabels[lang];
+const figures = {
+  halibutHypotheses: cases.halibut[lang].figures.hypotheses,
+  mapExample: cases.maps[lang].figures.example,
+};
+const usedAreas = areaIds.filter((a) => projects.some((p) => p.areas.includes(a)));
+---
+
+<section id={site[lang].ids.projects} class="section explorer" aria-labelledby="h-projects" data-explorer data-lang={lang}>
+  <div class="wrap">
+    <h2 id="h-projects">{t.heading}</h2>
+    <p class="section-intro">{t.intro}</p>
+
+    <div class="filters" role="group" aria-label={t.filterLabel}>
+      <ul class="filter-bar">
+        <li><button type="button" class="filter-btn" data-area="" aria-pressed="true">{t.all}</button></li>
+        {
+          usedAreas.map((a) => (
+            <li>
+              <button type="button" class="filter-btn" data-area={a} aria-pressed="false">
+                {areas[a]}
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="count" role="status" data-count>{t.count(projects.length, projects.length)}</p>
+    </div>
+
+    <ul class="cards" data-cards>
+      {
+        projects.map((p) => {
+          const x = p.text[lang];
+          return (
+            <li class="card" data-areas={p.areas.join(' ')}>
+              <CardArt kind={p.art} />
+              <div class="body">
+                <p class="context">{x.context}</p>
+                <h3 id={`card-${p.id}-title`}>
+                  <a
+                    class="card-link"
+                    href={routeFor(p.route, lang)}
+                    data-dialog={`dlg-${p.id}`}
+                    aria-haspopup="dialog"
+                  >
+                    {x.title}
+                  </a>
+                </h3>
+                <p class="summary">{x.summary}</p>
+                <ul class="area-chips" aria-label={t.dialog.areas}>
+                  {p.areas.map((a) => (
+                    <li>{areas[a]}</li>
+                  ))}
+                </ul>
+                <p class="cta" aria-hidden="true">
+                  {t.openHint} <span class="arrow">→</span>
+                </p>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+
+  {
+    projects.map((p) => {
+      const x = p.text[lang];
+      const fig = p.visual.kind === 'figure' ? figures[p.visual.key] : null;
+      const demoHref = p.links.demo
+        ? typeof p.links.demo === 'string'
+          ? p.links.demo
+          : routeFor(p.links.demo.route, lang)
+        : null;
+      const extra = [
+        p.links.code && { label: t.dialog.code, href: p.links.code, external: true },
+        demoHref && { label: t.dialog.demo, href: demoHref, external: typeof p.links.demo === 'string' },
+        p.links.article && { label: t.dialog.article, href: p.links.article, external: true },
+        p.links.dataset && { label: t.dialog.dataset, href: p.links.dataset, external: true },
+      ].filter(Boolean) as { label: string; href: string; external: boolean }[];
+      return (
+        <dialog id={`dlg-${p.id}`} class="project-dialog" aria-labelledby={`dlg-${p.id}-title`}>
+          <div class="dlg">
+            <header class="dlg-head">
+              <p class="context">{x.context}</p>
+              <h2 id={`dlg-${p.id}-title`}>{x.title}</h2>
+              <button type="button" class="dlg-close" data-close>
+                <span aria-hidden="true">×</span>
+                <span class="visually-hidden">{t.dialog.close}</span>
+              </button>
+            </header>
+            <div class="dlg-body">
+              <figure class="dlg-visual">
+                {fig ? (
+                  <Image src={fig.src} alt={fig.alt} widths={[480, 800]} sizes="(max-width: 40rem) 92vw, 36rem" format="webp" quality={75} loading="lazy" />
+                ) : (
+                  <CardArt kind={p.art} />
+                )}
+                <figcaption>{x.visualCaption}</figcaption>
+              </figure>
+              <div class="dlg-text">
+                <h3>{t.dialog.problem}</h3>
+                <p>{x.problem}</p>
+                <h3>{t.dialog.role}</h3>
+                <p>{x.role}</p>
+                <h3>{t.dialog.tools}</h3>
+                <ul class="tags">
+                  {p.tools.map((tool) => (
+                    <li>{tool}</li>
+                  ))}
+                </ul>
+                <h3>{t.dialog.links}</h3>
+                <ul class="dlg-links">
+                  <li>
+                    <a class="btn btn-primary" href={routeFor(p.route, lang)}>
+                      {t.dialog.caseLink} <span aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                  {extra.map((l) => (
+                    <li>
+                      <a class="btn btn-outline" href={l.href} rel={l.external ? 'noopener' : undefined}>
+                        {l.label}
+                        {l.external && <span aria-hidden="true"> ↗</span>}
+                        {l.external && <span class="visually-hidden"> {ui.external}</span>}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      );
+    })
+  }
+</section>
+
+<script>
+  import { explorer } from '../content/explorer';
+
+  document.querySelectorAll<HTMLElement>('[data-explorer]').forEach((root) => {
+    const t = explorer[root.dataset.lang === 'en' ? 'en' : 'es'];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('.filter-btn')];
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-cards] > .card')];
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+
+    // Filtros: uno activo cada vez («Todos» o un área). Un proyecto puede tener varias áreas.
+    buttons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const area = btn.dataset.area ?? '';
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        let visible = 0;
+        cards.forEach((card) => {
+          const show = !area || (card.dataset.areas ?? '').split(' ').includes(area);
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        count.textContent = t.count(visible, cards.length);
+      }),
+    );
+
+    // Ventanas flotantes: el foco vuelve al enlace que las abrió.
+    let opener: HTMLElement | null = null;
+    root.querySelectorAll<HTMLAnchorElement>('a[data-dialog]').forEach((link) =>
+      link.addEventListener('click', (e) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        const dlg = document.getElementById(link.dataset.dialog!) as HTMLDialogElement | null;
+        if (!dlg || typeof dlg.showModal !== 'function') return;
+        e.preventDefault();
+        opener = link;
+        dlg.showModal();
+      }),
+    );
+
+    root.querySelectorAll<HTMLDialogElement>('dialog.project-dialog').forEach((dlg) => {
+      dlg.querySelector('[data-close]')?.addEventListener('click', () => dlg.close());
+      // Clic en el fondo (fuera del contenido) cierra la ventana.
+      dlg.addEventListener('click', (e) => {
+        if (e.target === dlg) dlg.close();
+      });
+      dlg.addEventListener('close', () => {
+        opener?.focus();
+        opener = null;
+      });
+    });
+  });
+</script>
+
+<style>
+  .explorer {
+    border-top: 0;
+    padding-top: clamp(1.75rem, 1rem + 2vw, 2.5rem);
+  }
+
+  .explorer .section-intro {
+    max-width: none;
+    margin-bottom: 0.75rem;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .count {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  .card:hover {
+    border-color: var(--sea);
+    box-shadow: 0 8px 22px rgb(11 31 42 / 0.12);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .card:focus-within {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.1rem 1.25rem 1rem;
+  }
+
+  .context {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-ink);
+    margin: 0 0 0.5rem;
+  }
+
+  .card h3 {
+    font-size: 1.2rem;
+  }
+
+  .card-link {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* Un solo enlace por tarjeta, extendido sobre toda la tarjeta. */
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .card-link:focus-visible {
+    outline: none;
+  }
+
+  .card:hover .card-link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+
+  .summary {
+    color: var(--muted);
+    font-size: 0.97rem;
+    margin: 0 0 0.9rem;
+  }
+
+  .area-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    list-style: none;
+    margin: 0 0 0.9rem;
+    padding: 0;
+  }
+
+  .area-chips li {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(31 107 96 / 0.1);
+    color: var(--sea);
+  }
+
+  .cta {
+    margin: auto 0 0;
+    font-weight: 600;
+    color: var(--sea);
+    font-size: 0.95rem;
+  }
+
+  /* Ventana flotante */
+  .project-dialog {
+    width: min(100% - 1rem, 52rem);
+    max-height: min(100dvh - 2rem, 54rem);
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+    overscroll-behavior: contain;
+  }
+
+  .project-dialog::backdrop {
+    background: rgb(11 31 42 / 0.6);
+  }
+
+  :global(body:has(dialog[open])) {
+    overflow: hidden;
+  }
+
+  .dlg-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 1rem 3.75rem 0.9rem 1.25rem;
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .dlg-head .context {
+    color: var(--accent);
+  }
+
+  .dlg-head h2 {
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.6rem);
+    margin: 0;
+  }
+
+  .dlg-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--on-navy);
+    background: transparent;
+    border: 1px solid var(--on-navy-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .dlg-close:hover {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .dlg-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 1.5rem;
+    padding: 1.25rem;
+  }
+
+  .dlg-visual {
+    margin: 0;
+  }
+
+  .dlg-visual :global(img),
+  .dlg-visual :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--rule);
+    background: #fff;
+  }
+
+  .dlg-visual figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .dlg-text h3 {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 1rem 0 0.35rem;
+  }
+
+  .dlg-text h3:first-child {
+    margin-top: 0;
+  }
+
+  .dlg-text p {
+    margin: 0;
+  }
+
+  .dlg-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .dlg-links .btn {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 40rem) {
+    /* En móvil la ventana ocupa casi toda la pantalla. */
+    .project-dialog {
+      width: calc(100% - 0.75rem);
+      max-width: none;
+      max-height: calc(100dvh - 0.75rem);
+      margin: auto;
+    }
+
+    .dlg-body {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+  }
+</style>

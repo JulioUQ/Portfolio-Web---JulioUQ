@@ -1,0 +1,305 @@
+---
+/**
+ * Visualización interactiva de la flota. El primer estado se pinta en el servidor (funciona sin JS);
+ * el script lo actualiza al cambiar los controles. Gráfico decorativo + resumen y tabla en texto.
+ */
+import data from '../data/flota-serie.json';
+import { fleetChart } from '../content/fleet-chart';
+import { chartSvg, summaryFor, tableRows, scopeLabel, type FleetData, type FleetSelection } from '../lib/fleet';
+import type { Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = fleetChart[lang];
+const d = data as FleetData;
+const initial: FleetSelection = { gear: '', region: '', metric: 'n', from: d.years[0], to: d.years[d.years.length - 1] };
+const uid = `fleet-${lang}`;
+---
+
+<figure class="fleet" data-fleet data-lang={lang} aria-labelledby={`${uid}-title`}>
+  <figcaption id={`${uid}-title`} class="fleet-head">{c.heading}</figcaption>
+
+  <form class="controls" data-controls aria-label={c.heading}>
+    <div class="field">
+      <label for={`${uid}-gear`}>{c.controls.gear}</label>
+      <select id={`${uid}-gear`} name="gear">
+        <option value="">{c.text.allGears}</option>
+        {d.gears.map((g) => <option value={g}>{c.text.gearLabels[g] ?? g}</option>)}
+      </select>
+    </div>
+    <div class="field">
+      <label for={`${uid}-region`}>{c.controls.region}</label>
+      <select id={`${uid}-region`} name="region">
+        <option value="">{c.text.allRegions}</option>
+        {d.regions.map((r) => <option value={r}>{r}</option>)}
+      </select>
+    </div>
+    <div class="field">
+      <label for={`${uid}-metric`}>{c.controls.metric}</label>
+      <select id={`${uid}-metric`} name="metric">
+        {(['n', 'kw', 'gt'] as const).map((m) => <option value={m}>{c.metricOptions[m]}</option>)}
+      </select>
+    </div>
+    <div class="field period">
+      <label for={`${uid}-from`}>{c.controls.from}</label>
+      <select id={`${uid}-from`} name="from">
+        {d.years.map((y) => <option value={y} selected={y === initial.from}>{y}</option>)}
+      </select>
+    </div>
+    <div class="field period">
+      <label for={`${uid}-to`}>{c.controls.to}</label>
+      <select id={`${uid}-to`} name="to">
+        {d.years.map((y) => <option value={y} selected={y === initial.to}>{y}</option>)}
+      </select>
+    </div>
+    <button type="reset" class="reset">{c.controls.reset}</button>
+  </form>
+
+  <p class="chart-title" data-title>
+    <span data-metric-name>{c.text.metricNames[initial.metric]}</span>{' '}{c.text.chartTitle}{' · '}<span data-scope
+      >{scopeLabel(initial, c.text)}</span
+    >
+  </p>
+  <div class="chart" data-chart set:html={chartSvg(d, initial, c.text)} />
+  <p class="summary" data-summary role="status" aria-live="polite">{summaryFor(d, initial, c.text)}</p>
+
+  <details class="table-toggle">
+    <summary>{c.tableToggle}</summary>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{c.tableYear}</th>
+            <th scope="col" data-table-unit>{c.metricOptions[initial.metric]}</th>
+          </tr>
+        </thead>
+        <tbody data-table set:html={tableRows(d, initial, c.text)} />
+      </table>
+    </div>
+  </details>
+
+  <details class="howto">
+    <summary>{c.howTo.heading}</summary>
+    <ul>
+      {c.howTo.items.map((item) => <li set:html={item} />)}
+    </ul>
+  </details>
+</figure>
+
+<script>
+  import data from '../data/flota-serie.json';
+  import { fleetChart } from '../content/fleet-chart';
+  import { chartSvg, summaryFor, tableRows, scopeLabel, type FleetData, type FleetSelection, type Metric } from '../lib/fleet';
+
+  const d = data as FleetData;
+
+  document.querySelectorAll<HTMLElement>('[data-fleet]').forEach((root) => {
+    const lang = root.dataset.lang === 'en' ? 'en' : 'es';
+    const c = fleetChart[lang];
+    const form = root.querySelector<HTMLFormElement>('[data-controls]')!;
+    const get = (name: string) => form.querySelector<HTMLSelectElement>(`[name="${name}"]`)!;
+
+    const render = () => {
+      let from = Number(get('from').value);
+      let to = Number(get('to').value);
+      // Un periodo invertido se corrige intercambiando los extremos.
+      if (from > to) {
+        [from, to] = [to, from];
+        get('from').value = String(from);
+        get('to').value = String(to);
+      }
+      const sel: FleetSelection = {
+        gear: get('gear').value,
+        region: get('region').value,
+        metric: get('metric').value as Metric,
+        from,
+        to,
+      };
+      const chart = root.querySelector<HTMLElement>('[data-chart]')!;
+      chart.innerHTML = chartSvg(d, sel, c.text, chart.clientWidth || 720);
+      root.querySelector('[data-summary]')!.textContent = summaryFor(d, sel, c.text);
+      root.querySelector('[data-metric-name]')!.textContent = c.text.metricNames[sel.metric];
+      root.querySelector('[data-scope]')!.textContent = scopeLabel(sel, c.text);
+      root.querySelector('[data-table]')!.innerHTML = tableRows(d, sel, c.text);
+      root.querySelector('[data-table-unit]')!.textContent = c.metricOptions[sel.metric];
+    };
+
+    form.addEventListener('change', render);
+    form.addEventListener('submit', (e) => e.preventDefault());
+    // «Restablecer» devuelve los controles a su valor inicial y vuelve a pintar tras el reset.
+    form.addEventListener('reset', () => setTimeout(render, 0));
+    // Primer ajuste al ancho real y nuevo dibujo si cambia el ancho (giro del móvil, ventana).
+    render();
+    let lastWidth = root.querySelector<HTMLElement>('[data-chart]')!.clientWidth;
+    new ResizeObserver(() => {
+      const w = root.querySelector<HTMLElement>('[data-chart]')!.clientWidth;
+      if (Math.abs(w - lastWidth) > 8) {
+        lastWidth = w;
+        render();
+      }
+    }).observe(root.querySelector('[data-chart]')!);
+  });
+</script>
+
+<style>
+  .fleet {
+    margin: 1.5rem 0 2rem;
+    padding: clamp(1rem, 0.6rem + 1.5vw, 1.5rem);
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-top: 4px solid var(--sea);
+    border-radius: var(--radius);
+  }
+
+  .fleet-head {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: 0.75rem 1rem;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  select,
+  .reset {
+    min-height: 2.75rem;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .reset {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--sea);
+    background: transparent;
+    border-color: var(--sea);
+  }
+
+  select:focus-visible,
+  .reset:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .chart-title {
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .chart {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .chart :global(.fleet-svg) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .chart :global(.bar) {
+    fill: var(--sea);
+  }
+
+  .chart :global(.bar.edge) {
+    fill: var(--accent);
+  }
+
+  .chart :global(.grid) {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+
+  .chart :global(.axis) {
+    stroke: var(--muted);
+  }
+
+  .chart :global(.tick) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    fill: var(--muted);
+  }
+
+  .summary {
+    margin: 0.75rem 0 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+    font-size: 0.98rem;
+  }
+
+  details {
+    border-top: 1px solid var(--rule);
+  }
+
+  details summary {
+    cursor: pointer;
+    padding: 0.7rem 0;
+    font-weight: 600;
+    color: var(--sea);
+  }
+
+  details summary:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .table-wrap {
+    max-height: 18rem;
+    overflow: auto;
+    margin-bottom: 0.75rem;
+  }
+
+  .table-wrap table {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .table-wrap th,
+  .table-wrap td {
+    padding: 0.25rem 0.5rem;
+    text-align: right;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .table-wrap th[scope='row'],
+  .table-wrap thead th:first-child {
+    text-align: left;
+  }
+
+  .howto ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  .howto li {
+    margin-bottom: 0.5rem;
+  }
+</style>

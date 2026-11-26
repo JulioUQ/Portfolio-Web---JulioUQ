@@ -1,0 +1,559 @@
+---
+import { Image } from 'astro:assets';
+import MarssDiagram from './MarssDiagram.astro';
+import CaseAside from './CaseAside.astro';
+import FleetChart from './FleetChart.astro';
+import FlowDiagram from './FlowDiagram.astro';
+import type { CaseContent } from '../content/cases/types';
+import { site } from '../content/site';
+import { routeFor, type Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+  c: CaseContent;
+}
+
+const { lang, c } = Astro.props;
+const t = site[lang];
+const projectsHref = `${routeFor('home', lang)}#${t.ids.projects}`;
+---
+
+<article class="case">
+  <header class="case-head">
+    <div class="wrap">
+      <p class="crumb"><a href={projectsHref}>← {c.breadcrumb}</a></p>
+      <p class="kicker">{c.kicker}</p>
+      <h1>{c.title}</h1>
+
+      <!-- Inicio del caso: resumen corto, papel en una línea y enlace a la fuente principal. -->
+      <div class="lead">
+        <dl>
+          <div class="lead-summary">
+            <dt>{c.lead.summaryLabel}</dt>
+            <dd>{c.lead.summary}</dd>
+          </div>
+          <div class="lead-role">
+            <dt>{c.lead.roleLabel}</dt>
+            <dd>{c.lead.role}</dd>
+          </div>
+        </dl>
+        <p class="lead-link">
+          <a class="btn btn-primary" href={c.lead.link.href} rel="noopener">
+            {c.lead.link.label} <span aria-hidden="true">↗</span>
+            <span class="visually-hidden">{t.ui.external}</span>
+          </a>
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- En pantallas estrechas, la ficha y el índice se agrupan en un desplegable. -->
+    <details class="case-index">
+      <summary>{c.disclosure}</summary>
+      <div class="case-index-body">
+        <CaseAside c={c} idPrefix="m" />
+      </div>
+    </details>
+
+    <div class="layout">
+      <aside class="aside">
+        <CaseAside c={c} idPrefix="d" />
+      </aside>
+
+      <div class="prose">
+        {
+          c.sections.map((section) => (
+            <section id={section.id} aria-labelledby={`h-${section.id}`}>
+              <h2 id={`h-${section.id}`}>{section.heading}</h2>
+              {section.blocks.map((block) => {
+                if (block.type === 'p') return <p set:html={block.html} />;
+                if (block.type === 'list')
+                  return (
+                    <ul class="points">
+                      {block.items.map((item) => (
+                        <li set:html={item} />
+                      ))}
+                    </ul>
+                  );
+                if (block.type === 'steps')
+                  return (
+                    <ol class="steps">
+                      {block.items.map((step) => (
+                        <li>
+                          <h3>{step.title}</h3>
+                          <p set:html={step.html} />
+                        </li>
+                      ))}
+                    </ol>
+                  );
+                if (block.type === 'table')
+                  return (
+                    <div class="table-scroll">
+                      <table class="table-stack">
+                        <caption>{block.caption}</caption>
+                        <thead>
+                          <tr>
+                            {block.head.map((h) => (
+                              <th scope="col">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {block.rows.map((row) => (
+                            <tr>
+                              {row.map((cell, i) => (
+                                <td data-label={block.head[i]}>{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                if (block.type === 'code')
+                  return (
+                    <figure class="code-figure">
+                      <figcaption>{block.caption}</figcaption>
+                      <pre tabindex="0"><code>{block.lines.join('\n')}</code></pre>
+                    </figure>
+                  );
+                if (block.type === 'diagram' && c.diagram) return <MarssDiagram d={c.diagram} />;
+                if (block.type === 'component' && block.name === 'fleetChart') return <FleetChart lang={lang} />;
+                if (block.type === 'component' && block.name === 'flowDiagram') return <FlowDiagram lang={lang} />;
+                if (block.type === 'actions')
+                  return (
+                    <div class="case-actions">
+                      {block.items.map((a) => {
+                        const external = 'href' in a;
+                        const href = 'href' in a ? a.href : routeFor(a.route, lang);
+                        return (
+                          <div class="case-action">
+                            <a class={a.primary ? 'btn btn-primary' : 'btn btn-outline'} href={href} rel={external ? 'noopener' : undefined}>
+                              {a.label}
+                              {external && <span aria-hidden="true"> ↗</span>}
+                              {external && <span class="visually-hidden"> {t.ui.external}</span>}
+                            </a>
+                            {a.note && <p class="action-note">{a.note}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                if (block.type === 'figure') {
+                  const fig = c.figures[block.key];
+                  if (!fig) return null;
+                  return (
+                    <figure class="article-figure">
+                      <Image
+                        src={fig.src}
+                        alt={fig.alt}
+                        widths={[640, 1000, 1400]}
+                        sizes="(max-width: 52rem) 100vw, 46rem"
+                        format="webp"
+                        quality={80}
+                      />
+                      <figcaption>
+                        <span>{fig.caption}</span>
+                        <span class="credit" set:html={fig.credit} />
+                      </figcaption>
+                    </figure>
+                  );
+                }
+                if (block.type === 'roles')
+                  return (
+                    <div class="roles">
+                      <div class="role-box collective">
+                        <h3>{c.roles.collective.heading}</h3>
+                        <ul>
+                          {c.roles.collective.items.map((item) => (
+                            <li set:html={item} />
+                          ))}
+                        </ul>
+                      </div>
+                      <div class="role-box individual">
+                        <h3>{c.roles.individual.heading}</h3>
+                        <ul>
+                          {c.roles.individual.items.map((item) => (
+                            <li set:html={item} />
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                return null;
+              })}
+            </section>
+          ))
+        }
+
+        {
+          c.related && (
+            <section id={c.related.id} aria-labelledby={`h-${c.related.id}`}>
+              <h2 id={`h-${c.related.id}`}>{c.related.heading}</h2>
+              <p set:html={c.related.html} />
+            </section>
+          )
+        }
+
+        <p class="back"><a href={projectsHref}>← {t.ui.backHome}</a></p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .case-head {
+    background: var(--navy);
+    color: var(--on-navy);
+    padding-block: clamp(1.75rem, 1.25rem + 2.5vw, 3rem) clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  }
+
+  .crumb {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+  }
+
+  .crumb a {
+    color: var(--on-navy-muted);
+  }
+
+  .crumb a:hover {
+    color: var(--on-navy);
+  }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 1.2rem + 2.6vw, 2.85rem);
+    max-width: 26ch;
+    margin: 0;
+  }
+
+  /* Inicio del caso */
+  .lead {
+    max-width: 46rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--navy-line);
+  }
+
+  .lead dl {
+    margin: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .lead dt {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+  }
+
+  .lead dd {
+    margin: 0;
+  }
+
+  .lead-summary dd {
+    font-size: clamp(1.02rem, 0.98rem + 0.25vw, 1.15rem);
+    line-height: 1.5;
+  }
+
+  .lead-role dd {
+    color: var(--on-navy-muted);
+  }
+
+  .lead-link {
+    margin: 1.25rem 0 0;
+  }
+
+  /* Desplegable con ficha e índice: solo en pantallas estrechas */
+  .case-index {
+    display: none;
+    margin: 1.25rem 0 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--card);
+  }
+
+  .case-index summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3rem;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+  }
+
+  .case-index summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .case-index summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    color: var(--sea);
+  }
+
+  .case-index[open] summary::after {
+    content: '−';
+  }
+
+  .case-index summary:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+
+  .case-index-body {
+    display: grid;
+    gap: 1.25rem;
+    padding: 0 1rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 15.5rem) minmax(0, 1fr);
+    gap: clamp(2rem, 4vw, 4rem);
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+  }
+
+  .aside {
+    align-self: start;
+    position: sticky;
+    top: 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .prose {
+    max-width: 46rem;
+    min-width: 0;
+  }
+
+  .prose section {
+    margin-bottom: 2.75rem;
+  }
+
+  .prose h2 {
+    padding-top: 0.5rem;
+  }
+
+  .prose p {
+    margin: 0 0 1rem;
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    padding: 0.05em 0.3em;
+    background: var(--paper-2);
+    border-radius: 3px;
+  }
+
+  .points {
+    padding-left: 1.2rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .points li {
+    margin-bottom: 0.6rem;
+  }
+
+  .points li::marker {
+    color: var(--accent);
+  }
+
+  /* Pasos numerados */
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 1rem 1.1rem 0.25rem 3.4rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .steps h3 {
+    font-size: 1.1rem;
+    margin: 0.1rem 0 0.4rem;
+  }
+
+  /* Bloque de código */
+  .code-figure {
+    margin: 1.25rem 0 1.5rem;
+  }
+
+  .code-figure figcaption {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .code-figure pre {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    background: var(--navy);
+    color: var(--on-navy);
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .code-figure pre:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .code-figure pre :global(code),
+  .prose .code-figure :global(code) {
+    padding: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .article-figure {
+    margin: 2rem 0;
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+  }
+
+  .article-figure :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .article-figure figcaption {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.75rem 0.25rem 0.25rem;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+
+  .credit {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .roles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .role-box {
+    padding: 1.1rem 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--rule);
+    background: var(--card);
+  }
+
+  .role-box ul {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  .role-box li {
+    margin-bottom: 0.5rem;
+  }
+
+  .collective {
+    border-top: 4px solid var(--sea);
+  }
+
+  .individual {
+    border-top: 4px solid var(--accent);
+  }
+
+  .case-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.25rem;
+    margin: 0 0 1.75rem;
+  }
+
+  .case-action {
+    display: grid;
+    gap: 0.4rem;
+    max-width: 26rem;
+  }
+
+  .action-note {
+    margin: 0 !important;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .back {
+    margin-top: 3rem;
+    font-weight: 600;
+  }
+
+  @media (max-width: 60rem) {
+    .case-index {
+      display: block;
+    }
+
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+      padding-top: 2rem;
+    }
+
+    .aside {
+      display: none;
+    }
+
+    .roles {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,240 @@
+---
+/** Página de trayectoria: cronología explorable, etapas y formación. */
+import Timeline from './Timeline.astro';
+import { backgroundPage, type Related, type EducationItem } from '../content/background';
+import { routeFor, type Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const b = backgroundPage[lang];
+const hrefOf = (r: Related) => ('href' in r ? r.href : `${routeFor(r.route, lang)}${r.hash ? `#${r.hash}` : ''}`);
+const groups: { heading: string; intro?: string; items: EducationItem[] }[] = [
+  b.education.degrees,
+  b.education.programs,
+  b.education.certifications,
+];
+---
+
+<article class="bg-page">
+  <header class="bg-head">
+    <div class="wrap">
+      <p class="kicker">{b.kicker}</p>
+      <h1>{b.title}</h1>
+      <p class="intro">{b.intro}</p>
+    </div>
+  </header>
+
+  <section class="wrap section-block" aria-labelledby="h-timeline">
+    <h2 id="h-timeline">{b.timeline.heading}</h2>
+    <p class="lead">{b.timeline.intro}</p>
+    <Timeline lang={lang} />
+  </section>
+
+  <section class="wrap section-block" aria-labelledby="h-stages">
+    <h2 id="h-stages">{b.stagesHeading}</h2>
+    <ol class="stages">
+      {
+        b.stages.map((s) => (
+          <li id={s.id} class="stage">
+            <p class="stage-kicker">
+              {s.kicker} · <span class="mono">{s.period}</span>
+            </p>
+            <h3>{s.title}</h3>
+            {s.paragraphs.map((p) => (
+              <p set:html={p} />
+            ))}
+            {s.connections && (
+              <ul class="connections">
+                {s.connections.map((r) => (
+                  <li>
+                    <a href={hrefOf(r)}>{r.label} →</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="wrap section-block" aria-labelledby="h-education">
+    <h2 id="h-education">{b.education.heading}</h2>
+    <p class="lead">{b.education.intro}</p>
+    <div class="edu-grid">
+      {
+        groups.map((g) => (
+          <section class="edu-group" aria-label={g.heading}>
+            <h3>{g.heading}</h3>
+            {g.intro && <p class="edu-intro">{g.intro}</p>}
+            <ul>
+              {g.items.map((it) => (
+                <li>
+                  <span class="edu-title">{it.title}</span>
+                  <span class="edu-org">
+                    {it.org}
+                    {it.period && <span class="mono"> · {it.period}</span>}
+                  </span>
+                  {(it.note || it.related) && (
+                    <span class="edu-rel">
+                      {it.note && <span>{it.note} </span>}
+                      {it.related?.map((r, i) => (
+                        <>
+                          {i > 0 && <span aria-hidden="true"> · </span>}
+                          <a href={hrefOf(r)}>{r.label}</a>
+                        </>
+                      ))}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+      <section class="edu-group" aria-label={b.education.languages.heading}>
+        <h3>{b.education.languages.heading}</h3>
+        <ul>
+          {b.education.languages.items.map((l) => <li>{l}</li>)}
+        </ul>
+      </section>
+    </div>
+  </section>
+</article>
+
+<style>
+  .bg-head {
+    background: var(--navy);
+    color: var(--on-navy);
+    padding-block: clamp(1.75rem, 1.25rem + 2.5vw, 3rem);
+  }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 1.2rem + 2.6vw, 2.85rem);
+    max-width: 26ch;
+    margin: 0 0 1rem;
+  }
+
+  .intro {
+    max-width: 46rem;
+    margin: 0;
+    color: var(--on-navy-muted);
+    font-size: 1.08rem;
+  }
+
+  .section-block {
+    padding-block: clamp(2rem, 1.5rem + 2vw, 3rem) 0;
+  }
+
+  .section-block:last-child {
+    padding-bottom: 5rem;
+  }
+
+  .lead {
+    max-width: 46rem;
+    color: var(--muted);
+    margin: 0 0 1rem;
+  }
+
+  .stages {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.25rem;
+    max-width: 52rem;
+  }
+
+  .stage {
+    padding: 1.2rem 1.35rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--sea);
+    border-radius: var(--radius);
+  }
+
+  .stage-kicker {
+    margin: 0 0 0.3rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-ink);
+  }
+
+  .stage p {
+    margin: 0 0 0.75rem;
+  }
+
+  .connections {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-weight: 600;
+  }
+
+  .edu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1.25rem;
+  }
+
+  .edu-group {
+    padding: 1.1rem 1.25rem;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+  }
+
+  .edu-group h3 {
+    font-size: 1.1rem;
+  }
+
+  .edu-intro {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .edu-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .edu-group li {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .edu-group li:last-child {
+    border-bottom: 0;
+  }
+
+  .edu-title {
+    font-weight: 600;
+  }
+
+  .edu-org {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .edu-rel {
+    font-size: 0.9rem;
+  }
+</style>

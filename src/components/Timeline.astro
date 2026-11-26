@@ -1,0 +1,430 @@
+---
+/**
+ * Cronología explorable. Cada hito es un botón con su barra sobre el eje de años (los periodos
+ * que se solapan se ven solapados). Al elegirlo se muestra su ficha. Sin JS, todas las fichas
+ * se ven como lista; con JS se muestra solo la seleccionada.
+ */
+import { milestones, milestoneKinds, kindLabels, timelineRange, backgroundPage, type Related } from '../content/background';
+import { routeFor, type Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = backgroundPage[lang].timeline;
+const kinds = kindLabels[lang];
+const { from, to } = timelineRange;
+const span = (to - from) * 12;
+const pos = (ym: string | null) => {
+  const [y, m] = (ym ?? `${to - 1}-11`).split('-').map(Number);
+  return ((y - from) * 12 + (m - 1)) / span;
+};
+const sorted = [...milestones].sort((a, b) => a.start.localeCompare(b.start));
+const years = Array.from({ length: to - from }, (_, i) => from + i);
+const hrefOf = (r: Related) => ('href' in r ? r.href : `${routeFor(r.route, lang)}${r.hash ? `#${r.hash}` : ''}`);
+const defaultId = 'tragsatec';
+const countText = (n: number) => `${n} ${n === 1 ? t.resultsOne : t.resultsMany}`;
+---
+
+<div class="timeline" data-timeline data-one={t.resultsOne} data-many={t.resultsMany}>
+  <div class="tl-filters" role="group" aria-label={t.filterLabel}>
+    <ul class="filter-bar">
+      <li><button type="button" class="filter-btn" data-kind="" aria-pressed="true">{t.all}</button></li>
+      {
+        milestoneKinds.map((k) => (
+          <li>
+            <button type="button" class={`filter-btn kind-${k}`} data-kind={k} aria-pressed="false">
+              {kinds[k]}
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="count" role="status" data-count>{countText(milestones.length)}</p>
+  </div>
+
+  <div class="chart">
+    <div class="axis" aria-hidden="true">
+      {
+        years.map((y) => (
+          <span class={y % 2 === 0 ? 'yr' : 'yr odd'} style={`left:${(((y - from) * 12) / span) * 100}%`}>
+            {y}
+          </span>
+        ))
+      }
+    </div>
+    <ol class="rows">
+      {
+        sorted.map((m) => {
+          const x = m.text[lang];
+          const left = pos(m.start) * 100;
+          const right = (m.end ? pos(m.end) + 1 / span : 1) * 100;
+          return (
+            <li class="row" data-kind={m.kind}>
+              <button
+                type="button"
+                class={`ms kind-${m.kind}`}
+                data-id={m.id}
+                aria-pressed={m.id === defaultId ? 'true' : 'false'}
+                aria-controls={`ms-${m.id}`}
+              >
+                <span class="ms-label">
+                  <span class="ms-title">{x.title}</span>
+                  <span class="ms-meta">
+                    {kinds[m.kind]} · {x.period}
+                  </span>
+                </span>
+                <span class="track" aria-hidden="true">
+                  <span
+                    class={m.end ? 'bar' : 'bar open'}
+                    style={`left:${left.toFixed(2)}%;width:${Math.max(1.2, right - left).toFixed(2)}%`}
+                  />
+                </span>
+              </button>
+            </li>
+          );
+        })
+      }
+    </ol>
+    <p class="note">{t.precisionNote}</p>
+  </div>
+
+  <section class="details" aria-label={t.listHeading}>
+    {
+      sorted.map((m) => {
+        const x = m.text[lang];
+        return (
+          <article id={`ms-${m.id}`} class={`detail kind-${m.kind}`} data-detail={m.id} data-kind={m.kind} tabindex="-1">
+            <p class="detail-kind">{kinds[m.kind]}</p>
+            <h3>{x.title}</h3>
+            <p class="detail-meta">
+              <span>{x.place}</span>
+              <span aria-hidden="true"> · </span>
+              <span>{x.period}</span>
+            </p>
+            <ul>
+              {x.points.map((pt) => (
+                <li>{pt}</li>
+              ))}
+            </ul>
+            {x.related && (
+              <p class="detail-related">
+                <strong>{t.relatedLabel}:</strong>{' '}
+                {x.related.map((r, i) => (
+                  <>
+                    {i > 0 && <span aria-hidden="true"> · </span>}
+                    <a href={hrefOf(r)} rel={'href' in r ? 'noopener' : undefined}>
+                      {r.label}
+                    </a>
+                  </>
+                ))}
+              </p>
+            )}
+          </article>
+        );
+      })
+    }
+  </section>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-timeline]').forEach((root) => {
+    const one = root.dataset.one ?? '';
+    const many = root.dataset.many ?? '';
+    const filters = [...root.querySelectorAll<HTMLButtonElement>('.filter-btn')];
+    const rows = [...root.querySelectorAll<HTMLElement>('.row')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('.ms')];
+    const details = [...root.querySelectorAll<HTMLElement>('[data-detail]')];
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    root.classList.add('js');
+
+    const select = (id: string) => {
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
+      details.forEach((d) => (d.hidden = d.dataset.detail !== id));
+    };
+
+    buttons.forEach((b) =>
+      b.addEventListener('click', () => {
+        select(b.dataset.id!);
+        // Si la ficha queda fuera de la pantalla (p. ej. en móvil), se acerca sin mover el foco.
+        const d = details.find((x) => x.dataset.detail === b.dataset.id);
+        const r = d?.getBoundingClientRect();
+        if (d && r && (r.top > innerHeight || r.bottom < 0)) d.scrollIntoView({ block: 'nearest' });
+      }),
+    );
+
+    filters.forEach((f) =>
+      f.addEventListener('click', () => {
+        const kind = f.dataset.kind ?? '';
+        filters.forEach((x) => x.setAttribute('aria-pressed', String(x === f)));
+        let n = 0;
+        rows.forEach((r) => {
+          const show = !kind || r.dataset.kind === kind;
+          r.hidden = !show;
+          if (show) n++;
+        });
+        count.textContent = `${n} ${n === 1 ? one : many}`;
+        // Si el hito seleccionado queda oculto, se elige el más reciente visible.
+        const current = buttons.find((b) => b.getAttribute('aria-pressed') === 'true');
+        if (!current || current.closest<HTMLElement>('.row')!.hidden) {
+          const visible = rows.filter((r) => !r.hidden);
+          const last = visible[visible.length - 1]?.querySelector<HTMLButtonElement>('.ms');
+          if (last) select(last.dataset.id!);
+        }
+      }),
+    );
+
+    const initial = buttons.find((b) => b.getAttribute('aria-pressed') === 'true') ?? buttons[buttons.length - 1];
+    select(initial.dataset.id!);
+  });
+</script>
+
+<style>
+  .timeline {
+    --c-field: #b0643a;
+    --c-research: var(--sea);
+    --c-data: #2f5e8c;
+    --c-education: #7a6a3a;
+    margin: 1.5rem 0 0;
+  }
+
+  .tl-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .count {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .chart {
+    --label-w: 17rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .axis {
+    position: relative;
+    height: 1.4rem;
+    margin-left: var(--label-w);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .yr {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .row[hidden] {
+    display: none;
+  }
+
+  .ms {
+    display: grid;
+    grid-template-columns: var(--label-w) minmax(0, 1fr);
+    align-items: center;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.35rem 0;
+    font: inherit;
+    text-align: left;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--rule);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .ms:hover .ms-title {
+    text-decoration: underline;
+  }
+
+  .ms[aria-pressed='true'] {
+    background: var(--paper-2);
+  }
+
+  .ms[aria-pressed='true'] .ms-title {
+    font-weight: 700;
+  }
+
+  .ms:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+  }
+
+  .ms-label {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0 0.75rem 0 0.4rem;
+  }
+
+  .ms-title {
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .ms-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .track {
+    position: relative;
+    display: block;
+    height: 1.1rem;
+    background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px);
+    background-size: calc(100% / 13) 100%;
+  }
+
+  .bar {
+    position: absolute;
+    top: 0.15rem;
+    height: 0.8rem;
+    border-radius: 3px;
+    background: var(--c, var(--sea));
+  }
+
+  .bar.open {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    background: linear-gradient(to right, var(--c, var(--sea)) 80%, transparent);
+  }
+
+  .ms[aria-pressed='true'] .bar {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .kind-field {
+    --c: var(--c-field);
+  }
+
+  .kind-research {
+    --c: var(--c-research);
+  }
+
+  .kind-data {
+    --c: var(--c-data);
+  }
+
+  .kind-education {
+    --c: var(--c-education);
+  }
+
+  .filter-btn.kind-field,
+  .filter-btn.kind-research,
+  .filter-btn.kind-data,
+  .filter-btn.kind-education {
+    border-color: var(--c);
+    color: var(--c);
+  }
+
+  .filter-btn.kind-field[aria-pressed='true'],
+  .filter-btn.kind-research[aria-pressed='true'],
+  .filter-btn.kind-data[aria-pressed='true'],
+  .filter-btn.kind-education[aria-pressed='true'] {
+    background: var(--c);
+    color: #fff;
+  }
+
+  .note {
+    margin: 0.75rem 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .details {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .detail {
+    padding: 1.1rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 5px solid var(--c, var(--sea));
+    border-radius: var(--radius);
+  }
+
+  .detail[hidden] {
+    display: none;
+  }
+
+  .detail-kind {
+    margin: 0 0 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c, var(--sea));
+  }
+
+  .detail h3 {
+    margin-bottom: 0.25rem;
+  }
+
+  .detail-meta {
+    margin: 0 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .detail ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.1rem;
+  }
+
+  .detail li {
+    margin-bottom: 0.4rem;
+  }
+
+  .detail-related {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 48rem) {
+    /* En móvil la etiqueta va encima de la barra para que se lea entera. */
+    .chart {
+      --label-w: 0rem;
+      padding: 0.75rem;
+    }
+
+    .axis {
+      margin-left: 0;
+    }
+
+    .yr.odd {
+      display: none;
+    }
+
+    .ms {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.35rem;
+      padding: 0.5rem 0.25rem;
+    }
+
+    .ms-label {
+      padding: 0;
+    }
+  }
+</style>

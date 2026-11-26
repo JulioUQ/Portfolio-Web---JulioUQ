@@ -1,0 +1,264 @@
+---
+import type { Lang } from '../i18n/routes';
+import { routeFor } from '../i18n/routes';
+import { site } from '../content/site';
+import { links } from '../content/links';
+import { chat } from '../content/chat';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = site[lang];
+const ask = chat[lang].section;
+---
+
+<section id={t.ids.background} class="section background" aria-labelledby="h-background">
+  <div class="wrap">
+    <h2 id="h-background">{t.background.heading}</h2>
+    <p class="section-intro">{t.background.intro}</p>
+    <ol class="transect">
+      {
+        t.background.areas.map((area) => (
+          <li class="leg">
+            <h3>{area.title}</h3>
+            <ul>
+              {area.items.map((item) => (
+                <li>
+                  <span class="period mono">{item.period}</span>
+                  <span set:html={item.text} />
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="more">
+      <a class="btn btn-outline" href={routeFor('background', lang)}>{t.background.more} <span aria-hidden="true">→</span></a>
+    </p>
+    <div class="education">
+      <h3>{t.background.education.heading}</h3>
+      <ul>
+        {t.background.education.items.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id={t.ids.publications} class="section publications" aria-labelledby="h-publications">
+  <div class="wrap">
+    <h2 id="h-publications">{t.publications.heading}</h2>
+    <h3>{t.publications.articlesHeading}</h3>
+    <ol class="articles">
+      {
+        t.publications.articles.map((article) => (
+          <li>
+            <p class="role mono">{article.role}</p>
+            <p class="citation" set:html={article.citation} />
+            <p class="refs">
+              <a href={article.href}>DOI</a>
+              {article.caseLink && (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <a href={routeFor(article.caseLink.route, lang)}>{article.caseLink.label}</a>
+                </>
+              )}
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+    <h3>{t.publications.talksHeading}</h3>
+    <ul class="talks">
+      {t.publications.talks.map((talk) => <li>{talk}</li>)}
+    </ul>
+  </div>
+</section>
+
+<section id={t.ids.ask} class="section ask" aria-labelledby="h-ask">
+  <div class="wrap ask-inner">
+    <div>
+      <h2 id="h-ask">{ask.heading}</h2>
+      <p class="section-intro">{ask.text}</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-open-chat aria-haspopup="dialog">{ask.open}</button>
+  </div>
+</section>
+
+<section id={t.ids.contact} class="section contact" aria-labelledby="h-contact">
+  <div class="wrap">
+    <h2 id="h-contact">{t.contact.heading}</h2>
+    <p class="section-intro">{t.contact.text}</p>
+    <ul class="contact-links">
+      <li>
+        <a class="btn btn-contact" href={links.linkedin} rel="noopener">
+          {t.contact.linkedin}<span class="visually-hidden"> {t.ui.external}</span>
+        </a>
+      </li>
+      <li>
+        <a class="btn btn-contact" href={links.github} rel="noopener">
+          {t.contact.github}<span class="visually-hidden"> {t.ui.external}</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* Trayectoria como transecto */
+  .transect {
+    list-style: none;
+    margin: 0 0 2.5rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    position: relative;
+  }
+
+  .leg {
+    position: relative;
+    padding: 1.75rem 0 0;
+    border-top: 2px solid var(--sea);
+  }
+
+  .leg::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--paper);
+  }
+
+  .leg ul,
+  .education ul,
+  .talks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .leg li {
+    margin-bottom: 0.9rem;
+    color: var(--ink);
+  }
+
+  .period {
+    display: block;
+    color: var(--accent-ink);
+    margin-bottom: 0.15rem;
+  }
+
+  .education {
+    padding: 1.25rem 1.5rem;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+  }
+
+  .education li {
+    padding: 0.3rem 0;
+  }
+
+  @media (max-width: 52rem) {
+    .transect {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      border-left: 2px solid var(--sea);
+      padding-left: 1.5rem;
+      margin-left: 0.4rem;
+    }
+
+    .leg {
+      border-top: 0;
+      padding: 0 0 1.5rem;
+    }
+
+    .leg::before {
+      top: 0.35rem;
+      left: calc(-1.5rem - 8px);
+    }
+  }
+
+  /* Publicaciones */
+  .publications h3 {
+    margin-top: 1.5rem;
+  }
+
+  .articles {
+    list-style: none;
+    margin: 0 0 2rem;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .articles li {
+    padding: 1.1rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--sea);
+    border-radius: var(--radius);
+    max-width: 52rem;
+  }
+
+  .role {
+    color: var(--accent-ink);
+    margin: 0 0 0.35rem;
+  }
+
+  .citation {
+    margin: 0 0 0.5rem;
+  }
+
+  .refs {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .talks li {
+    padding: 0.3rem 0;
+    color: var(--muted);
+  }
+
+  .more {
+    margin: 0 0 2rem;
+  }
+
+  /* Pregúntame */
+  .ask-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .ask .section-intro {
+    margin-bottom: 0;
+  }
+
+  /* Contacto */
+  .contact-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .btn-contact {
+    background: var(--navy);
+    color: var(--on-navy);
+  }
+
+  .btn-contact:hover {
+    background: var(--navy-2);
+  }
+</style>

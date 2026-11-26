@@ -1,0 +1,23 @@
+/** Enlaces externos compartidos por ambos idiomas. */
+export const links = {
+  github: 'https://github.com/JulioUQ',
+  linkedin: 'https://www.linkedin.com/in/juliouq/',
+  article2023: 'https://doi.org/10.1111/fme.12639',
+  article2023Noaa: 'https://repository.library.noaa.gov/view/noaa/51175',
+  article2025: 'https://doi.org/10.1002/ece3.70822',
+  repoMarss: 'https://github.com/JulioUQ/Multivariate_Autoregressive_State-Space_-MARSS-_models',
+  repoMapGenerator: 'https://github.com/JulioUQ/App-Generador_de_Mapas_Interactivos#readme',
+  repoFleet: 'https://github.com/JulioUQ/Data-Science-Pescas-Limpieza-y-Modelado#readme',
+  repoFleetDashboard: 'https://github.com/JulioUQ/Analisis-tecnico-de-la-flota-pesquera',
+  repoScraping: 'https://github.com/JulioUQ/WebScrapping-con-Selenium-y-BeautifulSoup#readme',
+  datasetZenodo: 'https://doi.org/10.5281/zenodo.15132458',
+  repoCourse: 'https://github.com/JulioUQ/Curso-de-Estadistica-Basica#readme',
+  siteCourse: 'https://juliouq.github.io/Curso-de-Estadistica-Basica/',
+  repoPlatform: 'https://github.com/JulioUQ/plataforma-analitica-local#readme',
+  docsPlatform: 'https://github.com/JulioUQ/plataforma-analitica-local/blob/main/GUIA_OPERATIVA.md',
+  sitePlatform: 'https://juliouq.github.io/plataforma-analitica-local/',
+  fleetRegisterEU: 'https://webgate.ec.europa.eu/fleet-europa/search_en',
+  fleetRegisterES: 'https://servicio.pesca.mapama.es/censo/ConsultaBuqueRegistro/Buques/Search',
+  marssPackage: 'https://cran.r-project.org/package=MARSS',
+  ccBy: 'https://creativecommons.org/licenses/by/4.0/',
+} as const;

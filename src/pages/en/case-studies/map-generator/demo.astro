@@ -1,0 +1,12 @@
+---
+import Base from '../../../../layouts/Base.astro';
+import MapDemo from '../../../../components/MapDemo.astro';
+import { mapDemo } from '../../../../content/map-demo';
+
+const lang = 'en';
+const d = mapDemo[lang];
+---
+
+<Base lang={lang} route="mapsDemo" title={d.title} description={d.description} hideLauncher>
+  <MapDemo lang={lang} />
+</Base>

@@ -1,0 +1,137 @@
+---
+/** Diagrama propio del flujo de la plataforma de analítica. HTML real: se lee y se adapta al ancho. */
+import { flowDiagram } from '../content/cases/analytics-platform';
+import type { Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const d = flowDiagram[Astro.props.lang];
+---
+
+<figure class="flow" aria-labelledby="flow-title">
+  <figcaption id="flow-title" class="flow-title">{d.title}</figcaption>
+  <p class="lane-label">{d.local}</p>
+  <ol class="nodes">
+    {
+      d.nodes.map((n) => (
+        <li>
+          <span class="name">{n.name}</span>
+          <span class="detail">{n.detail}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="lane-label">{d.public}</p>
+  <ol class="nodes publish">
+    {
+      d.publish.map((n) => (
+        <li>
+          <span class="name">{n.name}</span>
+          <span class="detail">{n.detail}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="note">{d.note}</p>
+</figure>
+
+<style>
+  .flow {
+    margin: 1.5rem 0 2rem;
+    padding: clamp(1rem, 0.6rem + 1.5vw, 1.5rem);
+    background: var(--navy);
+    color: var(--on-navy);
+    border-radius: var(--radius);
+  }
+
+  .flow-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .lane-label {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .nodes {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 1.4rem;
+  }
+
+  .nodes li {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 0.3rem;
+    padding: 0.7rem 0.75rem;
+    border: 1.5px solid var(--sea-soft);
+    border-radius: var(--radius);
+    background: var(--navy-2);
+  }
+
+  /* Flecha hacia el siguiente paso */
+  .nodes li + li::before {
+    content: '→';
+    position: absolute;
+    left: -1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .publish {
+    grid-auto-columns: minmax(0, 1fr);
+    max-width: 30rem;
+  }
+
+  .publish li {
+    border-color: var(--accent);
+  }
+
+  .name {
+    font-weight: 700;
+  }
+
+  .detail {
+    font-size: 0.82rem;
+    color: var(--on-navy-muted);
+    line-height: 1.35;
+  }
+
+  .note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--on-navy-muted);
+  }
+
+  @media (max-width: 44rem) {
+    .nodes,
+    .publish {
+      grid-auto-flow: row;
+      gap: 1.6rem;
+      max-width: none;
+    }
+
+    .nodes li + li::before {
+      content: '↓';
+      left: 1rem;
+      top: -1.45rem;
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+/** Página de la demo: aviso, mapa a pantalla casi completa (iframe) y resumen en texto. */
+import { mapDemo } from '../content/map-demo';
+import { routeFor, withBase, type Lang } from '../i18n/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = mapDemo[lang];
+const src = withBase('/demos/mapa-ejemplo.html');
+---
+
+<div class="demo">
+  <div class="demo-bar">
+    <div class="wrap bar-inner">
+      <h1>{d.heading}</h1>
+      <p class="notice">{d.notice}</p>
+      <p class="demo-links">
+        <a href={routeFor('maps', lang)}>← {d.back}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={src}>{d.raw}</a>
+      </p>
+    </div>
+  </div>
+  <iframe class="demo-frame" src={src} title={d.frameTitle} loading="eager"></iframe>
+  <section class="wrap demo-text" aria-labelledby="demo-try">
+    <h2 id="demo-try">{d.tryHeading}</h2>
+    <ul>
+      {d.tries.map((x) => <li>{x}</li>)}
+    </ul>
+  </section>
+</div>
+
+<style>
+  .demo-bar {
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .bar-inner {
+    padding-block: 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.35rem;
+    margin: 0 0 0.25rem;
+  }
+
+  .notice {
+    margin: 0 0 0.25rem;
+    font-size: 0.92rem;
+  }
+
+  .demo-links {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  /* El mapa ocupa casi todo el alto visible, también en móvil. */
+  .demo-frame {
+    display: block;
+    width: 100%;
+    height: calc(100dvh - 4rem);
+    min-height: 26rem;
+    border: 0;
+    background: var(--paper-2);
+  }
+
+  .demo-text {
+    padding-block: 1.5rem 5rem;
+  }
+
+  .demo-text ul {
+    padding-left: 1.1rem;
+  }
+
+  .demo-text li {
+    margin-bottom: 0.4rem;
+  }
+</style>

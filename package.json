@@ -1,0 +1,21 @@
+{
+  "name": "portfolio-julio-ubeda-quesada",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check && npm --prefix api run check",
+    "demo:map": "node scripts/demo-mapa/copiar.mjs",
+    "api": "npm --prefix api start"
+  },
+  "dependencies": {
+    "astro": "^7.4.13"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^6.0.3"
+  }
+}
